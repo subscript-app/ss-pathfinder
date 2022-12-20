@@ -17,11 +17,11 @@ use font_kit::loaders::default::Font;
 use font_kit::properties::Properties;
 use font_kit::source::{Source, SystemSource};
 use font_kit::sources::mem::MemSource;
-use pathfinder_geometry::transform2d::Transform2F;
-use pathfinder_geometry::util;
-use pathfinder_geometry::vector::{Vector2F, vec2f};
-use pathfinder_renderer::paint::PaintId;
-use pathfinder_text::{FontContext, FontRenderOptions, TextRenderMode};
+use ss_pathfinder_geometry::transform2d::Transform2F;
+use ss_pathfinder_geometry::util;
+use ss_pathfinder_geometry::vector::{Vector2F, vec2f};
+use ss_pathfinder_renderer::paint::PaintId;
+// use ss_pathfinder_text::{FontContext, FontRenderOptions, TextRenderMode};
 use skribo::{FontCollection, FontFamily, FontRef, Layout as SkriboLayout, TextStyle};
 use std::borrow::Cow;
 use std::cell::{Cell, RefCell};
@@ -63,12 +63,13 @@ impl CanvasRenderingContext2D {
         text.layout(CanvasState(&self.current_state)).into_owned()
     }
 
-    fn fill_or_stroke_text<T>(&mut self,
-                              text: &T,
-                              mut position: Vector2F,
-                              paint_id: PaintId,
-                              render_mode: TextRenderMode)
-                              where T: ToTextLayout + ?Sized {
+    fn fill_or_stroke_text<T>(
+        &mut self,
+        text: &T,
+        mut position: Vector2F,
+        paint_id: PaintId,
+        render_mode: TextRenderMode
+    ) where T: ToTextLayout + ?Sized {
         let layout = text.layout(CanvasState(&self.current_state));
 
         let clip_path = self.current_state.clip_path;
@@ -78,21 +79,21 @@ impl CanvasRenderingContext2D {
         let transform = self.current_state.transform * Transform2F::from_translation(position);
 
         // TODO(pcwalton): Report errors.
-        drop(self.canvas_font_context
-                 .0
-                 .borrow_mut()
-                 .font_context
-                 .push_layout(&mut self.canvas.scene,
-                              &layout.skribo_layout,
-                              &TextStyle { size: layout.font_size },
-                              &FontRenderOptions {
-                                  transform,
-                                  render_mode,
-                                  hinting_options: HintingOptions::None,
-                                  clip_path,
-                                  blend_mode,
-                                  paint_id,
-                              }));
+        drop({
+            self.canvas_font_context.0.borrow_mut().font_context.push_layout(
+                &mut self.canvas.scene,
+                &layout.skribo_layout,
+                &TextStyle { size: layout.font_size },
+                &FontRenderOptions {
+                    transform,
+                    render_mode,
+                    hinting_options: HintingOptions::None,
+                    clip_path,
+                    blend_mode,
+                    paint_id,
+                }
+            )
+        });
     }
 
     // Text styles

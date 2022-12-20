@@ -8,9 +8,9 @@
 // option. This file may not be copied, modified, or distributed
 // except according to those terms.
 
-use pathfinder_gpu::{BufferTarget, BufferUploadMode, Device, VertexAttrClass};
-use pathfinder_gpu::{VertexAttrDescriptor, VertexAttrType};
-use pathfinder_resources::ResourceLoader;
+use ss_pathfinder_gpu::{BufferTarget, BufferUploadMode, Device, VertexAttrClass};
+use ss_pathfinder_gpu::{VertexAttrDescriptor, VertexAttrType};
+use ss_pathfinder_resources::ResourceLoader;
 
 // TODO(pcwalton): Replace with `mem::size_of` calls?
 pub(crate) const TILE_INSTANCE_SIZE: usize = 16;

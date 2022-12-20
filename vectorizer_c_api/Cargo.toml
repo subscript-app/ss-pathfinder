@@ -1,0 +1,50 @@
+[package]
+name = "vectorizer_c_api"
+version = "0.1.0"
+authors = ["Patrick Walton <pcwalton@mimiga.net>"]
+edition = "2018"
+
+[features]
+capi = []
+
+[lib]
+crate-type = ["staticlib"]
+name = "vectorizer_c_api"
+
+[dependencies]
+foreign-types = "0.3"
+libc = "0.2"
+core-foundation = "0.6"
+io-surface = "0.12"
+metal = "0.19"
+# metal = "0.18"
+
+# jemallocator = "0.3"
+
+[dependencies.ss_pathfinder_canvas]
+path = "../canvas"
+
+[dependencies.ss_pathfinder_color]
+path = "../color"
+
+[dependencies.ss_pathfinder_content]
+path = "../content"
+
+[dependencies.ss_pathfinder_geometry]
+path = "../geometry"
+
+[dependencies.ss_pathfinder_gpu]
+path = "../gpu"
+
+[dependencies.ss_pathfinder_renderer]
+path = "../renderer"
+
+[dependencies.ss_pathfinder_resources]
+path = "../resources"
+
+[dependencies.ss_pathfinder_simd]
+path = "../simd"
+
+[dependencies.ss_pathfinder_metal]
+path = "../metal_backend"
+

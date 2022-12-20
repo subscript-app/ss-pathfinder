@@ -8,10 +8,10 @@
 // option. This file may not be copied, modified, or distributed
 // except according to those terms.
 
-use pathfinder_content::outline::ContourIterFlags;
-use pathfinder_content::segment::SegmentKind;
-use pathfinder_geometry::vector::{Vector2F, vec2f};
-use pathfinder_renderer::scene::{DrawPathId, Scene};
+use ss_pathfinder_content::outline::ContourIterFlags;
+use ss_pathfinder_content::segment::SegmentKind;
+use ss_pathfinder_geometry::vector::{Vector2F, vec2f};
+use ss_pathfinder_renderer::scene::{DrawPathId, Scene};
 use std::fmt;
 use std::io::{self, Write};
 

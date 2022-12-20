@@ -17,12 +17,12 @@
 
 use crate::gpu::options::RendererLevel;
 use crate::gpu::perf::{RenderStats, RenderTime};
-use pathfinder_geometry::rect::RectI;
-use pathfinder_geometry::vector::{Vector2I, vec2i};
-use pathfinder_gpu::Device;
-use pathfinder_gpu::allocator::GPUMemoryAllocator;
-use pathfinder_resources::ResourceLoader;
-use pathfinder_ui::{FONT_ASCENT, LINE_HEIGHT, PADDING, UIPresenter, WINDOW_COLOR};
+use ss_pathfinder_geometry::rect::RectI;
+use ss_pathfinder_geometry::vector::{Vector2I, vec2i};
+use ss_pathfinder_gpu::Device;
+use ss_pathfinder_gpu::allocator::GPUMemoryAllocator;
+use ss_pathfinder_resources::ResourceLoader;
+use ss_pathfinder_ui::{FONT_ASCENT, LINE_HEIGHT, PADDING, UIPresenter, WINDOW_COLOR};
 use std::collections::VecDeque;
 use std::ops::{Add, Div};
 use std::time::Duration;

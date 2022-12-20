@@ -1,5 +1,5 @@
 [package]
-name = "pathfinder_resources"
+name = "ss_pathfinder_resources"
 version = "0.5.0"
 edition = "2018"
 authors = ["Patrick Walton <pcwalton@mimiga.net>"]

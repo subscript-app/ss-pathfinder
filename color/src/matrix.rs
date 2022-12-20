@@ -8,7 +8,7 @@
 // option. This file may not be copied, modified, or distributed
 // except according to those terms.
 
-use pathfinder_simd::default::F32x4;
+use ss_pathfinder_simd::default::F32x4;
 use std::ops::{Add, Mul, Deref};
 
 /// ColorMatrix filter/transformation

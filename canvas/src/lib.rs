@@ -1,3 +1,4 @@
+#![allow(unused)]
 // pathfinder/canvas/src/lib.rs
 //
 // Copyright © 2020 The Pathfinder Project Developers.
@@ -10,26 +11,31 @@
 
 //! A simple API for Pathfinder that mirrors a subset of HTML canvas.
 
-pub use pathfinder_color::{ColorF, ColorU, rgbaf, rgbau, rgbf, rgbu};
-pub use pathfinder_color::{color_slice_to_u8_slice, u8_slice_to_color_slice, u8_vec_to_color_vec};
-pub use pathfinder_content::fill::FillRule;
-pub use pathfinder_content::stroke::LineCap;
-pub use pathfinder_content::outline::ArcDirection;
-pub use pathfinder_geometry::rect::{RectF, RectI};
-pub use pathfinder_geometry::transform2d::Transform2F;
-pub use pathfinder_geometry::vector::{IntoVector2F, Vector2F, Vector2I, vec2f, vec2i};
+// extern crate ss_pathfinder_geometry as pathfinder_geometry;
+// extern crate ss_pathfinder_color as pathfinder_color;
+// extern crate ss_pathfinder_content as pathfinder_content;
+// extern crate ss_pathfinder_renderer as pathfinder_renderer;
 
-use pathfinder_content::dash::OutlineDash;
-use pathfinder_content::effects::{BlendMode, BlurDirection, PatternFilter};
-use pathfinder_content::gradient::Gradient;
-use pathfinder_content::outline::{Contour, Outline};
-use pathfinder_content::pattern::{Image, Pattern};
-use pathfinder_content::render_target::RenderTargetId;
-use pathfinder_content::stroke::{LineJoin as StrokeLineJoin};
-use pathfinder_content::stroke::{OutlineStrokeToFill, StrokeStyle};
-use pathfinder_geometry::line_segment::LineSegment2F;
-use pathfinder_renderer::paint::{Paint, PaintCompositeOp};
-use pathfinder_renderer::scene::{ClipPath, ClipPathId, DrawPath, RenderTarget, Scene};
+pub use ss_pathfinder_color::{ColorF, ColorU, rgbaf, rgbau, rgbf, rgbu};
+pub use ss_pathfinder_color::{color_slice_to_u8_slice, u8_slice_to_color_slice, u8_vec_to_color_vec};
+pub use ss_pathfinder_content::fill::FillRule;
+pub use ss_pathfinder_content::stroke::LineCap;
+pub use ss_pathfinder_content::outline::ArcDirection;
+pub use ss_pathfinder_geometry::rect::{RectF, RectI};
+pub use ss_pathfinder_geometry::transform2d::Transform2F;
+pub use ss_pathfinder_geometry::vector::{IntoVector2F, Vector2F, Vector2I, vec2f, vec2i};
+
+use ss_pathfinder_content::dash::OutlineDash;
+use ss_pathfinder_content::effects::{BlendMode, BlurDirection, PatternFilter};
+use ss_pathfinder_content::gradient::Gradient;
+use ss_pathfinder_content::outline::{Contour, Outline};
+use ss_pathfinder_content::pattern::{Image, Pattern};
+use ss_pathfinder_content::render_target::RenderTargetId;
+use ss_pathfinder_content::stroke::LineJoin as StrokeLineJoin;
+use ss_pathfinder_content::stroke::{OutlineStrokeToFill, StrokeStyle};
+use ss_pathfinder_geometry::line_segment::LineSegment2F;
+use ss_pathfinder_renderer::paint::{Paint, PaintCompositeOp};
+use ss_pathfinder_renderer::scene::{ClipPath, ClipPathId, DrawPath, RenderTarget, Scene};
 use std::borrow::Cow;
 use std::default::Default;
 use std::f32::consts::PI;
@@ -40,19 +46,19 @@ use std::sync::Arc;
 
 pub use text::CanvasFontContext;
 
-#[cfg(feature = "pf-text")]
-use skribo::FontCollection;
-#[cfg(not(feature = "pf-text"))]
-use crate::text::FontCollection;
+// #[cfg(feature = "pf-text")]
+// use skribo::FontCollection;
+// #[cfg(not(feature = "pf-text"))]
+// use crate::text::FontCollection;
 
-#[cfg(feature = "pf-text")]
-pub use text::TextMetrics;
+// #[cfg(feature = "pf-text")]
+// pub use text::TextMetrics;
 
 const HAIRLINE_STROKE_WIDTH: f32 = 0.0333;
-const DEFAULT_FONT_SIZE: f32 = 10.0;
+// const DEFAULT_FONT_SIZE: f32 = 10.0;
 
-#[cfg(feature = "pf-text")]
-mod text;
+// #[cfg(feature = "pf-text")]
+// mod text;
 
 // For users who don't want text capability, include a tiny convenience stub.
 #[cfg(not(feature = "pf-text"))]
@@ -66,7 +72,7 @@ mod text {
         }
     }
 
-    pub struct FontCollection;
+    // pub struct FontCollection;
 }
 
 #[cfg(test)]
@@ -110,16 +116,15 @@ impl Canvas {
         self.scene
     }
 
-    pub fn get_context_2d(self, canvas_font_context: CanvasFontContext)
-                          -> CanvasRenderingContext2D {
-        #[cfg(feature = "pf-text")]
-        let default_font_collection =
-            canvas_font_context.0.borrow().default_font_collection.clone();
-        #[cfg(not(feature = "pf-text"))]
-        let default_font_collection = Arc::new(FontCollection);
+    pub fn get_context_2d(self, canvas_font_context: CanvasFontContext) -> CanvasRenderingContext2D {
+        // #[cfg(feature = "pf-text")]
+        // let default_font_collection = canvas_font_context.0.borrow().default_font_collection.clone();
+        // #[cfg(not(feature = "pf-text"))]
+        // let default_font_collection = Arc::new(FontCollection);
         CanvasRenderingContext2D {
             canvas: self,
-            current_state: State::default(default_font_collection),
+            // current_state: State::default(default_font_collection),
+            current_state: State::default(),
             saved_states: vec![],
             canvas_font_context,
         }
@@ -274,12 +279,12 @@ impl CanvasRenderingContext2D {
     // Fill and stroke styles
 
     #[inline]
-    pub fn set_fill_style<FS>(&mut self, new_fill_style: FS) where FS: Into<FillStyle> {
+    pub fn set_fill_style(&mut self, new_fill_style: impl Into<FillStyle>) {
         self.current_state.fill_paint = new_fill_style.into().into_paint();
     }
 
     #[inline]
-    pub fn set_stroke_style<FS>(&mut self, new_stroke_style: FS) where FS: Into<FillStyle> {
+    pub fn set_stroke_style(&mut self, new_stroke_style: impl Into<FillStyle>) {
         self.current_state.stroke_paint = new_stroke_style.into().into_paint();
     }
 
@@ -338,9 +343,7 @@ impl CanvasRenderingContext2D {
 
         let mut outline = path.into_outline();
         if !self.current_state.line_dash.is_empty() {
-            let mut dash = OutlineDash::new(&outline,
-                                            &self.current_state.line_dash,
-                                            self.current_state.line_dash_offset);
+            let mut dash = OutlineDash::new(&outline, &self.current_state.line_dash, self.current_state.line_dash_offset);
             dash.dash();
             outline = dash.into_outline();
         }
@@ -384,14 +387,10 @@ impl CanvasRenderingContext2D {
             outline.transform(&Transform2F::from_translation(self.current_state.shadow_offset));
 
             let shadow_blur_info =
-                push_shadow_blur_render_targets_if_needed(&mut self.canvas.scene,
-                                                          &self.current_state,
-                                                          outline.bounds());
+                push_shadow_blur_render_targets_if_needed(&mut self.canvas.scene, &self.current_state, outline.bounds());
 
             if let Some(ref shadow_blur_info) = shadow_blur_info {
-                outline.transform(&Transform2F::from_translation(-shadow_blur_info.bounds
-                                                                                  .origin()
-                                                                                  .to_f32()));
+                outline.transform(&Transform2F::from_translation(-shadow_blur_info.bounds.origin().to_f32()));
             }
 
             // Per spec the shadow must respect the alpha of the shadowed path, but otherwise have
@@ -414,9 +413,7 @@ impl CanvasRenderingContext2D {
             path.set_blend_mode(blend_mode);
             self.canvas.scene.push_draw_path(path);
 
-            composite_shadow_blur_render_targets_if_needed(&mut self.canvas.scene,
-                                                           shadow_blur_info,
-                                                           clip_path);
+            composite_shadow_blur_render_targets_if_needed(&mut self.canvas.scene, shadow_blur_info, clip_path);
         }
 
         let mut path = DrawPath::new(outline, paint_id);
@@ -425,10 +422,11 @@ impl CanvasRenderingContext2D {
         path.set_blend_mode(blend_mode);
         self.canvas.scene.push_draw_path(path);
 
-        fn push_shadow_blur_render_targets_if_needed(scene: &mut Scene,
-                                                     current_state: &State,
-                                                     outline_bounds: RectF)
-                                                    -> Option<ShadowBlurRenderTargetInfo> {
+        fn push_shadow_blur_render_targets_if_needed(
+            scene: &mut Scene,
+            current_state: &State,
+            outline_bounds: RectF
+        ) -> Option<ShadowBlurRenderTargetInfo> {
             if current_state.shadow_blur == 0.0 {
                 return None;
             }
@@ -449,9 +447,11 @@ impl CanvasRenderingContext2D {
             })
         }
 
-        fn composite_shadow_blur_render_targets_if_needed(scene: &mut Scene,
-                                                          info: Option<ShadowBlurRenderTargetInfo>,
-                                                          clip_path: Option<ClipPathId>) {
+        fn composite_shadow_blur_render_targets_if_needed(
+            scene: &mut Scene,
+            info: Option<ShadowBlurRenderTargetInfo>,
+            clip_path: Option<ClipPathId>
+        ) {
             let info = match info {
                 None => return,
                 Some(info) => info,
@@ -548,8 +548,12 @@ impl CanvasRenderingContext2D {
         self.draw_subimage(pattern, src_rect, dest_location)
     }
 
-    pub fn draw_subimage<I, L>(&mut self, image: I, src_location: RectF, dest_location: L)
-                               where I: CanvasImageSource, L: CanvasImageDestLocation {
+    pub fn draw_subimage<I, L>(
+        &mut self,
+        image: I,
+        src_location: RectF,
+        dest_location: L
+    ) where I: CanvasImageSource, L: CanvasImageDestLocation {
         let dest_size = dest_location.size().unwrap_or(src_location.size());
         let scale = dest_size / src_location.size();
         let offset = dest_location.origin() - src_location.origin() * scale;
@@ -564,8 +568,7 @@ impl CanvasRenderingContext2D {
 
     // Pixel manipulation
 
-    pub fn put_image_data<L>(&mut self, image_data: ImageData, dest_location: L)
-                             where L: CanvasImageDestLocation {
+    pub fn put_image_data<L>(&mut self, image_data: ImageData, dest_location: L) where L: CanvasImageDestLocation {
         let origin = dest_location.origin();
         let size = dest_location.size().unwrap_or(image_data.size.to_f32());
         let pattern = Pattern::from_image(image_data.into_image());
@@ -612,8 +615,7 @@ impl CanvasRenderingContext2D {
 
     // Extensions
 
-    pub fn create_pattern_from_canvas(&mut self, canvas: Canvas, transform: Transform2F)
-                                      -> Pattern {
+    pub fn create_pattern_from_canvas(&mut self, canvas: Canvas, transform: Transform2F) -> Pattern {
         let subscene_size = canvas.size();
         let subscene = canvas.into_scene();
         let render_target = RenderTarget::new(subscene_size, String::new());
@@ -630,8 +632,8 @@ impl CanvasRenderingContext2D {
 #[derive(Clone)]
 struct State {
     transform: Transform2F,
-    font_collection: Arc<FontCollection>,
-    font_size: f32,
+    // font_collection: Arc<FontCollection>,
+    // font_size: f32,
     line_width: f32,
     line_cap: LineCap,
     line_join: LineJoin,
@@ -643,8 +645,8 @@ struct State {
     shadow_color: ColorU,
     shadow_blur: f32,
     shadow_offset: Vector2F,
-    text_align: TextAlign,
-    text_baseline: TextBaseline,
+    // text_align: TextAlign,
+    // text_baseline: TextBaseline,
     image_smoothing_enabled: bool,
     image_smoothing_quality: ImageSmoothingQuality,
     global_alpha: f32,
@@ -653,11 +655,11 @@ struct State {
 }
 
 impl State {
-    fn default(default_font_collection: Arc<FontCollection>) -> State {
+    fn default() -> State {
         State {
             transform: Transform2F::default(),
-            font_collection: default_font_collection,
-            font_size: DEFAULT_FONT_SIZE,
+            // font_collection: default_font_collection,
+            // font_size: DEFAULT_FONT_SIZE,
             line_width: 1.0,
             line_cap: LineCap::Butt,
             line_join: LineJoin::Miter,
@@ -669,8 +671,8 @@ impl State {
             shadow_color: ColorU::transparent_black(),
             shadow_blur: 0.0,
             shadow_offset: Vector2F::zero(),
-            text_align: TextAlign::Left,
-            text_baseline: TextBaseline::Alphabetic,
+            // text_align: TextAlign::Left,
+            // text_baseline: TextBaseline::Alphabetic,
             image_smoothing_enabled: true,
             image_smoothing_quality: ImageSmoothingQuality::Low,
             global_alpha: 1.0,
@@ -756,12 +758,14 @@ impl Path2D {
     }
 
     #[inline]
-    pub fn arc(&mut self,
-               center: Vector2F,
-               radius: f32,
-               start_angle: f32,
-               end_angle: f32,
-               direction: ArcDirection) {
+    pub fn arc(
+        &mut self,
+        center: Vector2F,
+        radius: f32,
+        start_angle: f32,
+        end_angle: f32,
+        direction: ArcDirection
+    ) {
         let transform = Transform2F::from_scale(radius).translate(center);
         self.current_contour.push_arc(&transform, start_angle, end_angle, direction);
     }
@@ -792,13 +796,14 @@ impl Path2D {
         self.current_contour.close();
     }
 
-    pub fn ellipse<A>(&mut self,
-                      center: Vector2F,
-                      axes: A,
-                      rotation: f32,
-                      start_angle: f32,
-                      end_angle: f32)
-                      where A: IntoVector2F {
+    pub fn ellipse<A>(
+        &mut self,
+        center: Vector2F,
+        axes: A,
+        rotation: f32,
+        start_angle: f32,
+        end_angle: f32
+    ) where A: IntoVector2F {
         self.flush_current_contour();
 
         let transform = Transform2F::from_scale(axes).rotate(rotation).translate(center);

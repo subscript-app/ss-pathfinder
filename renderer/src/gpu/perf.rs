@@ -11,7 +11,7 @@
 //! Performance monitoring infrastructure.
 
 use crate::gpu::options::RendererOptions;
-use pathfinder_gpu::Device;
+use ss_pathfinder_gpu::Device;
 use std::mem;
 use std::ops::{Add, Div};
 use std::time::Duration;

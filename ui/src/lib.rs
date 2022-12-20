@@ -1,3 +1,4 @@
+#![allow(unused)]
 // pathfinder/ui/src/lib.rs
 //
 // Copyright © 2020 The Pathfinder Project Developers.
@@ -17,15 +18,15 @@
 extern crate serde_derive;
 
 use hashbrown::HashMap;
-use pathfinder_color::ColorU;
-use pathfinder_geometry::rect::RectI;
-use pathfinder_geometry::vector::{Vector2F, Vector2I, vec2i};
-use pathfinder_gpu::allocator::{BufferTag, GPUMemoryAllocator};
-use pathfinder_gpu::{BlendFactor, BlendState, BufferTarget, Device, Primitive, RenderOptions};
-use pathfinder_gpu::{RenderState, RenderTarget, TextureFormat, UniformData, VertexAttrClass};
-use pathfinder_gpu::{VertexAttrDescriptor, VertexAttrType};
-use pathfinder_resources::ResourceLoader;
-use pathfinder_simd::default::F32x4;
+use ss_pathfinder_color::ColorU;
+use ss_pathfinder_geometry::rect::RectI;
+use ss_pathfinder_geometry::vector::{Vector2F, Vector2I, vec2i};
+use ss_pathfinder_gpu::allocator::{BufferTag, GPUMemoryAllocator};
+use ss_pathfinder_gpu::{BlendFactor, BlendState, BufferTarget, Device, Primitive, RenderOptions};
+use ss_pathfinder_gpu::{RenderState, RenderTarget, TextureFormat, UniformData, VertexAttrClass};
+use ss_pathfinder_gpu::{VertexAttrDescriptor, VertexAttrType};
+use ss_pathfinder_resources::ResourceLoader;
+use ss_pathfinder_simd::default::F32x4;
 use serde_json;
 use std::mem;
 

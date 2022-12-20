@@ -1,5 +1,5 @@
 [package]
-name = "pathfinder_canvas"
+name = "ss_pathfinder_canvas"
 version = "0.5.0"
 edition = "2018"
 authors = ["Patrick Walton <pcwalton@mimiga.net>"]
@@ -9,36 +9,39 @@ repository = "https://github.com/servo/pathfinder"
 homepage = "https://github.com/servo/pathfinder"
 keywords = ["pathfinder", "canvas", "vector", "graphics", "gpu"]
 
+# default-features = false
+
 [lib]
 crate-type = ["rlib", "staticlib"]
 
 [dependencies]
-font-kit = { version = "0.6", optional = true }
+# font-kit = { version = "0.6", optional = true }
 
-[dependencies.pathfinder_color]
+[dependencies.ss_pathfinder_color]
 path = "../color"
 version = "0.5"
 
-[dependencies.pathfinder_content]
+[dependencies.ss_pathfinder_content]
 path = "../content"
 version = "0.5"
 
-[dependencies.pathfinder_geometry]
+[dependencies.ss_pathfinder_geometry]
 path = "../geometry"
 version = "0.5"
 
-[dependencies.pathfinder_renderer]
+[dependencies.ss_pathfinder_renderer]
 path = "../renderer"
 version = "0.5"
 
-[dependencies.pathfinder_text]
-path = "../text"
-version = "0.5"
-optional = true
+# [dependencies.ss_pathfinder_text]
+# path = "../text"
+# version = "0.5"
+# optional = true
 
-[dependencies.skribo]
-version = "0.1"
-optional = true
+# [dependencies.skribo]
+# # path = "../skribo"
+# version = "0.1"
+# optional = true
 
-[features]
-pf-text = ["pathfinder_text", "skribo", "font-kit"]
+# [features]
+# pf-text = ["ss_pathfinder_text", "skribo", "font-kit"]

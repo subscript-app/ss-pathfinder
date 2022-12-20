@@ -13,7 +13,7 @@
 use crate::{BufferData, BufferTarget, BufferUploadMode, Device, TextureFormat};
 use instant::Instant;
 use fxhash::FxHashMap;
-use pathfinder_geometry::vector::Vector2I;
+use ss_pathfinder_geometry::vector::Vector2I;
 use std::collections::VecDeque;
 use std::default::Default;
 use std::mem;

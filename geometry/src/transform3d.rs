@@ -13,7 +13,7 @@
 use crate::rect::RectF;
 use crate::transform2d::Matrix2x2F;
 use crate::vector::{Vector2F, Vector2I, Vector3F, Vector4F};
-use pathfinder_simd::default::F32x4;
+use ss_pathfinder_simd::default::F32x4;
 use std::ops::{Add, Mul, MulAssign, Neg};
 
 /// An transform, optimized with SIMD.

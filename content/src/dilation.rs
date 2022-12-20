@@ -10,7 +10,7 @@
 
 use crate::orientation::Orientation;
 use crate::outline::Contour;
-use pathfinder_geometry::vector::{Vector2F, vec2f};
+use ss_pathfinder_geometry::vector::{Vector2F, vec2f};
 
 pub struct ContourDilator<'a> {
     contour: &'a mut Contour,

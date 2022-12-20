@@ -1,12 +1,12 @@
 [package]
-name = "pathfinder_export"
+name = "ss_pathfinder_export"
 version = "0.1.0"
 authors = ["Sebastian Köln <sebk@rynx.org>"]
 edition = "2018"
 
 [dependencies]
-pathfinder_color = { path = "../color" }
-pathfinder_content = { path = "../content" }
-pathfinder_geometry = { path = "../geometry" }
-pathfinder_renderer = { path = "../renderer" }
+ss_pathfinder_color = { path = "../color" }
+ss_pathfinder_content = { path = "../content" }
+ss_pathfinder_geometry = { path = "../geometry" }
+ss_pathfinder_renderer = { path = "../renderer" }
 deflate = "*"

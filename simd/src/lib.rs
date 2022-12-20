@@ -1,3 +1,4 @@
+#![allow(unused)]
 // pathfinder/simd/src/lib.rs
 //
 // Copyright © 2019 The Pathfinder Project Developers.

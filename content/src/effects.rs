@@ -10,10 +10,10 @@
 
 //! Special effects that can be applied to layers.
 
-use pathfinder_color::{ColorF, matrix::ColorMatrix};
-use pathfinder_geometry::line_segment::LineSegment2F;
-use pathfinder_geometry::vector::Vector2F;
-use pathfinder_simd::default::F32x2;
+use ss_pathfinder_color::{ColorF, matrix::ColorMatrix};
+use ss_pathfinder_geometry::line_segment::LineSegment2F;
+use ss_pathfinder_geometry::vector::Vector2F;
+use ss_pathfinder_simd::default::F32x2;
 
 /// A defringing kernel for LCD screens that approximates the macOS/iOS look.
 ///

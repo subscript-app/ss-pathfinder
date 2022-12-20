@@ -12,13 +12,13 @@
 
 use crate::gpu::options::RendererLevel;
 use crate::gpu_data::RenderCommand;
-use pathfinder_geometry::rect::RectF;
-use pathfinder_geometry::transform2d::Transform2F;
-use pathfinder_geometry::transform3d::Perspective;
-use pathfinder_geometry::vector::{Vector2F, Vector4F};
+use ss_pathfinder_geometry::rect::RectF;
+use ss_pathfinder_geometry::transform2d::Transform2F;
+use ss_pathfinder_geometry::transform3d::Perspective;
+use ss_pathfinder_geometry::vector::{Vector2F, Vector4F};
 
 #[allow(deprecated)]
-use pathfinder_content::clip::PolygonClipper3D;
+use ss_pathfinder_content::clip::PolygonClipper3D;
 
 /// A sink for the render commands that scenes build.
 /// 
@@ -128,9 +128,10 @@ impl RenderTransform {
         }
 
         let inverse_transform = perspective.transform.inverse();
-        let clip_polygon = points.into_iter()
-                                 .map(|point| (inverse_transform * point).to_2d())
-                                 .collect();
+        let clip_polygon = points
+            .into_iter()
+            .map(|point| (inverse_transform * point).to_2d())
+            .collect();
         return PreparedRenderTransform::Perspective {
             perspective,
             clip_polygon,

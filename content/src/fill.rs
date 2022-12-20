@@ -21,3 +21,9 @@ pub enum FillRule {
     /// The even-odd rule: <https://en.wikipedia.org/wiki/Even%E2%80%93odd_rule>
     EvenOdd,
 }
+
+impl Default for FillRule {
+    fn default() -> Self {
+        FillRule::Winding
+    }
+}

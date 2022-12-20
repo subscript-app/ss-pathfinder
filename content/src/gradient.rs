@@ -11,12 +11,12 @@
 //! Gradient effects that paths can be filled with.
 
 use crate::util;
-use pathfinder_color::ColorU;
-use pathfinder_geometry::line_segment::LineSegment2F;
-use pathfinder_geometry::transform2d::Transform2F;
-use pathfinder_geometry::vector::Vector2F;
-use pathfinder_geometry::util as geometry_util;
-use pathfinder_simd::default::F32x2;
+use ss_pathfinder_color::ColorU;
+use ss_pathfinder_geometry::line_segment::LineSegment2F;
+use ss_pathfinder_geometry::transform2d::Transform2F;
+use ss_pathfinder_geometry::vector::Vector2F;
+use ss_pathfinder_geometry::util as geometry_util;
+use ss_pathfinder_simd::default::F32x2;
 use std::cmp::Ordering;
 use std::convert;
 use std::hash::{Hash, Hasher};
@@ -272,8 +272,8 @@ impl RadialGradientLine for Vector2F {
 #[cfg(test)]
 mod test {
     use crate::gradient::Gradient;
-    use pathfinder_color::ColorU;
-    use pathfinder_geometry::vector::Vector2F;
+    use ss_pathfinder_color::ColorU;
+    use ss_pathfinder_geometry::vector::Vector2F;
 
     #[test]
     fn stable_order() {

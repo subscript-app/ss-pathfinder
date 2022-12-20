@@ -1,5 +1,5 @@
 [package]
-name = "pathfinder_renderer"
+name = "ss_pathfinder_renderer"
 version = "0.5.0"
 edition = "2018"
 authors = ["Patrick Walton <pcwalton@mimiga.net>"]
@@ -27,31 +27,31 @@ vec_map = "0.8"
 version = "0.1"
 features = ["wasm-bindgen"]
 
-[dependencies.pathfinder_color]
+[dependencies.ss_pathfinder_color]
 path = "../color"
 version = "0.5"
 
-[dependencies.pathfinder_content]
+[dependencies.ss_pathfinder_content]
 path = "../content"
 version = "0.5"
 
-[dependencies.pathfinder_geometry]
+[dependencies.ss_pathfinder_geometry]
 path = "../geometry"
 version = "0.5"
 
-[dependencies.pathfinder_gpu]
+[dependencies.ss_pathfinder_gpu]
 path = "../gpu"
 version = "0.5"
 
-[dependencies.pathfinder_resources]
+[dependencies.ss_pathfinder_resources]
 path = "../resources"
 version = "0.5"
 
-[dependencies.pathfinder_simd]
+[dependencies.ss_pathfinder_simd]
 path = "../simd"
 version = "0.5"
 
-[dependencies.pathfinder_ui]
+[dependencies.ss_pathfinder_ui]
 path = "../ui"
 version = "0.5"
 

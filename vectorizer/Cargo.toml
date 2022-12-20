@@ -1,0 +1,52 @@
+[package]
+name = "vectorizer"
+version = "0.1.0"
+edition = "2018"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+foreign-types = "0.3"
+io-surface = "0.12"
+# metal = "0.18"
+metal = "0.19"
+objc = { version = "0.2" }
+core-foundation = "0.6"
+jemallocator = "0.3"
+libc = "0.2"
+
+# [dependencies.euclid]
+# version = "0.20"
+# features = []
+
+# [dependencies.surfman]
+# git = "https://github.com/servo/surfman"
+# rev = "f3df871ac8c3926fe9106d86a3e51e20aa50d3cc"
+# features = []
+
+[dependencies.ss_pathfinder_canvas]
+path = "../canvas"
+
+[dependencies.ss_pathfinder_color]
+path = "../color"
+
+[dependencies.ss_pathfinder_content]
+path = "../content"
+
+[dependencies.ss_pathfinder_geometry]
+path = "../geometry"
+
+[dependencies.ss_pathfinder_renderer]
+path = "../renderer"
+
+[dependencies.ss_pathfinder_metal]
+path = "../metal_backend"
+
+[dependencies.ss_pathfinder_resources]
+path = "../resources"
+
+[dependencies.ss_pathfinder_gpu]
+path = "../gpu"
+
+[dependencies.ss_pathfinder_simd]
+path = "../simd"

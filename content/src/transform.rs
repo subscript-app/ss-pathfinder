@@ -13,8 +13,8 @@
 #![allow(deprecated)]
 
 use crate::segment::Segment;
-use pathfinder_geometry::transform2d::Transform2F;
-use pathfinder_geometry::transform3d::Perspective;
+use ss_pathfinder_geometry::transform2d::Transform2F;
+use ss_pathfinder_geometry::transform3d::Perspective;
 
 /// Transforms a path with a SIMD 2D transform.
 pub struct Transform2FPathIter<I>

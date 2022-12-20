@@ -8,8 +8,8 @@
 // option. This file may not be copied, modified, or distributed
 // except according to those terms.
 
-use pathfinder_geometry::rect::RectI;
-use pathfinder_geometry::vector::{Vector2I, vec2i};
+use ss_pathfinder_geometry::rect::RectI;
+use ss_pathfinder_geometry::vector::{Vector2I, vec2i};
 
 #[derive(Clone, Debug)]
 pub struct DenseTileMap<T> where T: Clone + Copy {

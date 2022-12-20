@@ -13,9 +13,9 @@
 use crate::effects::PatternFilter;
 use crate::render_target::RenderTargetId;
 use crate::util;
-use pathfinder_color::{self as color, ColorU};
-use pathfinder_geometry::transform2d::Transform2F;
-use pathfinder_geometry::vector::{Vector2I, vec2i};
+use ss_pathfinder_color::{self as color, ColorU};
+use ss_pathfinder_geometry::transform2d::Transform2F;
+use ss_pathfinder_geometry::vector::{Vector2I, vec2i};
 use std::collections::hash_map::DefaultHasher;
 use std::fmt::{self, Debug, Formatter};
 use std::hash::{Hash, Hasher};

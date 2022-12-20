@@ -12,8 +12,8 @@
 //! (aka. saethlin)
 
 use deflate::Compression;
-use pathfinder_color::ColorU;
-use pathfinder_geometry::vector::Vector2F;
+use ss_pathfinder_color::ColorU;
+use ss_pathfinder_geometry::vector::Vector2F;
 use std::io::{self, Write};
 
 struct Counter<T> {

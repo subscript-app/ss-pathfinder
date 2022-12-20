@@ -10,9 +10,9 @@
 
 //! Miscellaneous utilities.
 
-use pathfinder_geometry::line_segment::LineSegment2F;
-use pathfinder_geometry::transform2d::Transform2F;
-use pathfinder_simd::default::{F32x2, F32x4};
+use ss_pathfinder_geometry::line_segment::LineSegment2F;
+use ss_pathfinder_geometry::transform2d::Transform2F;
+use ss_pathfinder_simd::default::{F32x2, F32x4};
 use std::hash::{Hash, Hasher};
 use std::mem;
 

@@ -24,20 +24,20 @@ use crate::gpu_data::{TexturePageDescriptor, TexturePageId, TileBatchTexture};
 use crate::options::BoundingQuad;
 use crate::tiles::{TILE_HEIGHT, TILE_WIDTH};
 use half::f16;
-use pathfinder_color::{self as color, ColorF, ColorU};
-use pathfinder_content::effects::{BlendMode, BlurDirection, Filter, PatternFilter};
-use pathfinder_content::render_target::RenderTargetId;
-use pathfinder_geometry::rect::{RectF, RectI};
-use pathfinder_geometry::transform3d::Transform4F;
-use pathfinder_geometry::util;
-use pathfinder_geometry::vector::{Vector2F, Vector2I, Vector4F, vec2f, vec2i};
-use pathfinder_gpu::allocator::{BufferTag, FramebufferID, FramebufferTag, GeneralBufferID};
-use pathfinder_gpu::allocator::{GPUMemoryAllocator, IndexBufferID, TextureID, TextureTag};
-use pathfinder_gpu::{BufferData, BufferTarget, ClearOps, DepthFunc, DepthState, Device, Primitive};
-use pathfinder_gpu::{RenderOptions, RenderState, RenderTarget, StencilFunc, StencilState};
-use pathfinder_gpu::{TextureBinding, TextureDataRef, TextureFormat, UniformBinding, UniformData};
-use pathfinder_resources::ResourceLoader;
-use pathfinder_simd::default::{F32x2, F32x4, I32x2};
+use ss_pathfinder_color::{self as color, ColorF, ColorU};
+use ss_pathfinder_content::effects::{BlendMode, BlurDirection, Filter, PatternFilter};
+use ss_pathfinder_content::render_target::RenderTargetId;
+use ss_pathfinder_geometry::rect::{RectF, RectI};
+use ss_pathfinder_geometry::transform3d::Transform4F;
+use ss_pathfinder_geometry::util;
+use ss_pathfinder_geometry::vector::{Vector2F, Vector2I, Vector4F, vec2f, vec2i};
+use ss_pathfinder_gpu::allocator::{BufferTag, FramebufferID, FramebufferTag, GeneralBufferID};
+use ss_pathfinder_gpu::allocator::{GPUMemoryAllocator, IndexBufferID, TextureID, TextureTag};
+use ss_pathfinder_gpu::{BufferData, BufferTarget, ClearOps, DepthFunc, DepthState, Device, Primitive};
+use ss_pathfinder_gpu::{RenderOptions, RenderState, RenderTarget, StencilFunc, StencilState};
+use ss_pathfinder_gpu::{TextureBinding, TextureDataRef, TextureFormat, UniformBinding, UniformData};
+use ss_pathfinder_resources::ResourceLoader;
+use ss_pathfinder_simd::default::{F32x2, F32x4, I32x2};
 use std::collections::VecDeque;
 use std::f32;
 use std::time::Duration;
@@ -165,70 +165,90 @@ impl<D> Renderer<D> where D: Device {
     /// 
     /// * `options`: Renderer options that can be changed after the renderer is created. Most
     ///   importantly, this specifies where the output should go (to a window or off-screen).
-    pub fn new(device: D,
-               resources: &dyn ResourceLoader,
-               mode: RendererMode,
-               options: RendererOptions<D>)
-               -> Renderer<D> {
+    pub fn new(
+        device: D,
+        resources: &dyn ResourceLoader,
+        mode: RendererMode,
+        options: RendererOptions<D>
+    ) -> Renderer<D> {
         let mut allocator = GPUMemoryAllocator::new();
 
         device.begin_commands();
 
-        let quad_vertex_positions_buffer_id =
-            allocator.allocate_general_buffer::<u16>(&device,
-                                                     QUAD_VERTEX_POSITIONS.len() as u64,
-                                                     BufferTag("QuadVertexPositions"));
-        device.upload_to_buffer(allocator.get_general_buffer(quad_vertex_positions_buffer_id),
-                                0,
-                                &QUAD_VERTEX_POSITIONS,
-                                BufferTarget::Vertex);
-        let quad_vertex_indices_buffer_id =
-            allocator.allocate_index_buffer::<u32>(&device,
-                                                   QUAD_VERTEX_INDICES.len() as u64,
-                                                   BufferTag("QuadVertexIndices"));
-        device.upload_to_buffer(allocator.get_index_buffer(quad_vertex_indices_buffer_id),
-                                0,
-                                &QUAD_VERTEX_INDICES,
-                                BufferTarget::Index);
+        let quad_vertex_positions_buffer_id = allocator.allocate_general_buffer::<u16>(
+            &device,
+            QUAD_VERTEX_POSITIONS.len() as u64,
+            BufferTag("QuadVertexPositions")
+        );
+        device.upload_to_buffer(
+            allocator.get_general_buffer(quad_vertex_positions_buffer_id),
+            0,
+            &QUAD_VERTEX_POSITIONS,
+            BufferTarget::Vertex
+        );
+        let quad_vertex_indices_buffer_id = allocator.allocate_index_buffer::<u32>(
+            &device,
+            QUAD_VERTEX_INDICES.len() as u64,
+            BufferTag("QuadVertexIndices")
+        );
+        device.upload_to_buffer(
+            allocator.get_index_buffer(quad_vertex_indices_buffer_id),
+            0,
+            &QUAD_VERTEX_INDICES,
+            BufferTarget::Index
+        );
 
-        let area_lut_texture_id = allocator.allocate_texture(&device,
-                                                             Vector2I::splat(256),
-                                                             TextureFormat::RGBA8,
-                                                             TextureTag("AreaLUT"));
-        let gamma_lut_texture_id = allocator.allocate_texture(&device,
-                                                              vec2i(256, 8),
-                                                              TextureFormat::R8,
-                                                              TextureTag("GammaLUT"));
-        device.upload_png_to_texture(resources,
-                                     "area-lut",
-                                     allocator.get_texture(area_lut_texture_id),
-                                     TextureFormat::RGBA8);
-        device.upload_png_to_texture(resources,
-                                     "gamma-lut",
-                                     allocator.get_texture(gamma_lut_texture_id),
-                                     TextureFormat::R8);
+        let area_lut_texture_id = allocator.allocate_texture(
+            &device,
+            Vector2I::splat(256),
+            TextureFormat::RGBA8,
+            TextureTag("AreaLUT")
+        );
+        let gamma_lut_texture_id = allocator.allocate_texture(
+            &device,
+            vec2i(256, 8),
+            TextureFormat::R8,
+            TextureTag("GammaLUT")
+        );
+        device.upload_png_to_texture(
+            resources,
+            "area-lut",
+            allocator.get_texture(area_lut_texture_id),
+            TextureFormat::RGBA8
+        );
+        device.upload_png_to_texture(
+            resources,
+            "gamma-lut",
+            allocator.get_texture(gamma_lut_texture_id),
+            TextureFormat::R8
+        );
 
         let window_size = options.dest.window_size(&device);
-        let intermediate_dest_framebuffer_id =
-            allocator.allocate_framebuffer(&device,
-                                           window_size,
-                                           TextureFormat::RGBA8,
-                                           FramebufferTag("IntermediateDest"));
+        let intermediate_dest_framebuffer_id = allocator.allocate_framebuffer(
+            &device,
+            window_size,
+            TextureFormat::RGBA8,
+            FramebufferTag("IntermediateDest")
+        );
 
-        let texture_metadata_texture_size = vec2i(TEXTURE_METADATA_TEXTURE_WIDTH,
-                                                  TEXTURE_METADATA_TEXTURE_HEIGHT);
-        let texture_metadata_texture_id =
-            allocator.allocate_texture(&device,
-                                       texture_metadata_texture_size,
-                                       TextureFormat::RGBA16F,
-                                       TextureTag("TextureMetadata"));
+        let texture_metadata_texture_size = vec2i(
+            TEXTURE_METADATA_TEXTURE_WIDTH,
+            TEXTURE_METADATA_TEXTURE_HEIGHT
+        );
+        let texture_metadata_texture_id = allocator.allocate_texture(
+            &device,
+            texture_metadata_texture_size,
+            TextureFormat::RGBA16F,
+            TextureTag("TextureMetadata")
+        );
 
         let core_programs = ProgramsCore::new(&device, resources);
-        let core_vertex_arrays =
-             VertexArraysCore::new(&device,
-                                   &core_programs,
-                                   allocator.get_general_buffer(quad_vertex_positions_buffer_id),
-                                   allocator.get_index_buffer(quad_vertex_indices_buffer_id));
+        let core_vertex_arrays = VertexArraysCore::new(
+            &device,
+            &core_programs,
+            allocator.get_general_buffer(quad_vertex_positions_buffer_id),
+            allocator.get_index_buffer(quad_vertex_indices_buffer_id)
+        );
 
         let mut core = RendererCore {
             device,
@@ -280,14 +300,16 @@ impl<D> Renderer<D> where D: Device {
             None
         };
 
-        let frame = Frame::new(&core.device,
-                               &mut core.allocator,
-                               &blit_program,
-                               &clear_program,
-                               &reprojection_program,
-                               &stencil_program,
-                               quad_vertex_positions_buffer_id,
-                               quad_vertex_indices_buffer_id);
+        let frame = Frame::new(
+            &core.device,
+            &mut core.allocator,
+            &blit_program,
+            &clear_program,
+            &reprojection_program,
+            &stencil_program,
+            quad_vertex_positions_buffer_id,
+            quad_vertex_indices_buffer_id
+        );
 
         core.device.end_commands();
 
@@ -350,7 +372,7 @@ impl<D> Renderer<D> where D: Device {
                 self.declare_render_target(id, location)
             }
             RenderCommand::UploadTextureMetadata(ref metadata) => {
-                self.upload_texture_metadata(metadata)
+                self.upload_texture_metadata(metadata);
             }
             RenderCommand::AddFillsD3D9(ref fills) => {
                 self.level_impl.require_d3d9().add_fills(&mut self.core, fills)
@@ -380,6 +402,7 @@ impl<D> Renderer<D> where D: Device {
                 self.core.stats.cpu_build_time = cpu_build_time;
             }
         }
+
     }
 
     /// Finishes rendering a scene.
@@ -418,10 +441,12 @@ impl<D> Renderer<D> where D: Device {
         self.core.device.end_commands();
     }
 
-    fn start_rendering(&mut self,
-                       bounding_quad: BoundingQuad,
-                       path_count: usize,
-                       needs_readable_framebuffer: bool) {
+    fn start_rendering(
+        &mut self,
+        bounding_quad: BoundingQuad,
+        path_count: usize,
+        needs_readable_framebuffer: bool
+    ) {
         match (&self.core.options.dest, self.core.mode.level) {
             (&DestFramebuffer::Other(_), _) => {
                 self.core
@@ -445,9 +470,12 @@ impl<D> Renderer<D> where D: Device {
             self.draw_stencil(&bounding_quad);
         }
 
+
         self.core.stats.path_count = path_count;
+        
 
         self.core.render_targets.clear();
+
     }
 
     fn update_debug_ui(&mut self) {
@@ -653,9 +681,15 @@ impl<D> Renderer<D> where D: Device {
     }
 
     fn upload_texture_metadata(&mut self, metadata: &[TextureMetadataEntry]) {
-        let padded_texel_size =
-            (util::alignup_i32(metadata.len() as i32, TEXTURE_METADATA_ENTRIES_PER_ROW) *
-             TEXTURE_METADATA_TEXTURE_WIDTH * 4) as usize;
+        // let padded_texel_size = {
+        //     (util::alignup_i32(metadata.len() as i32, TEXTURE_METADATA_ENTRIES_PER_ROW) *
+        //      TEXTURE_METADATA_TEXTURE_WIDTH * 4) as usize
+        // };
+        let padded_texel_size = {
+            let l = util::alignup_i32(metadata.len() as i32, TEXTURE_METADATA_ENTRIES_PER_ROW);
+            let r = TEXTURE_METADATA_TEXTURE_WIDTH * 4;
+            (l * r) as usize
+        };
         let mut texels = Vec::with_capacity(padded_texel_size);
         for entry in metadata {
             let base_color = entry.base_color.to_f32();
@@ -719,11 +753,13 @@ impl<D> Renderer<D> where D: Device {
             texels.push(f16::default())
         }
 
+        
         let texture_id = self.core.texture_metadata_texture_id;
         let texture = self.core.allocator.get_texture(texture_id);
         let width = TEXTURE_METADATA_TEXTURE_WIDTH;
         let height = texels.len() as i32 / (4 * TEXTURE_METADATA_TEXTURE_WIDTH);
         let rect = RectI::new(Vector2I::zero(), Vector2I::new(width, height));
+
         self.core.device.upload_to_texture(texture, rect, TextureDataRef::F16(&texels));
     }
 

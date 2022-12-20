@@ -15,7 +15,7 @@ use crate::rect::RectF;
 use crate::transform3d::Transform4F;
 use crate::unit_vector::UnitVector;
 use crate::vector::{IntoVector2F, Vector2F, vec2f};
-use pathfinder_simd::default::F32x4;
+use ss_pathfinder_simd::default::F32x4;
 use std::ops::{Mul, MulAssign, Sub};
 
 /// A 2x2 matrix, optimized with SIMD, in column-major order.

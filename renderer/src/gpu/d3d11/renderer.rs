@@ -21,13 +21,13 @@ use crate::gpu_data::{Fill, FirstTileD3D11, MicrolineD3D11, PathSource, Propagat
 use crate::gpu_data::{SegmentIndicesD3D11, SegmentsD3D11, TileD3D11, TileBatchDataD3D11};
 use crate::gpu_data::{TileBatchTexture, TilePathInfoD3D11};
 use byte_slice_cast::AsSliceOf;
-use pathfinder_geometry::transform2d::Transform2F;
-use pathfinder_geometry::vector::Vector2F;
-use pathfinder_gpu::allocator::{BufferTag, GeneralBufferID, GPUMemoryAllocator};
-use pathfinder_gpu::{BufferTarget, ComputeDimensions, ComputeState, Device, ImageAccess};
-use pathfinder_gpu::{RenderTarget, UniformData};
-use pathfinder_resources::ResourceLoader;
-use pathfinder_simd::default::{F32x4, I32x2};
+use ss_pathfinder_geometry::transform2d::Transform2F;
+use ss_pathfinder_geometry::vector::Vector2F;
+use ss_pathfinder_gpu::allocator::{BufferTag, GeneralBufferID, GPUMemoryAllocator};
+use ss_pathfinder_gpu::{BufferTarget, ComputeDimensions, ComputeState, Device, ImageAccess};
+use ss_pathfinder_gpu::{RenderTarget, UniformData};
+use ss_pathfinder_resources::ResourceLoader;
+use ss_pathfinder_simd::default::{F32x4, I32x2};
 use std::ops::Range;
 use vec_map::VecMap;
 
@@ -424,9 +424,7 @@ impl<D> RendererD3D11<D> where D: Device {
     }
 
     // Computes backdrops, performs clipping, and populates Z buffers on GPU.
-    pub(crate) fn prepare_tiles(&mut self,
-                                core: &mut RendererCore<D>,
-                                batch: &TileBatchDataD3D11) {
+    pub(crate) fn prepare_tiles(&mut self, core: &mut RendererCore<D>, batch: &TileBatchDataD3D11) {
         core.stats.total_tile_count += batch.tile_count as usize;
 
         // Upload tiles to GPU or allocate them as appropriate.
@@ -586,10 +584,8 @@ impl<D> RendererD3D11<D> where D: Device {
 
         match clip_buffer_ids {
             Some(clip_buffer_ids) => {
-                let clip_metadata_buffer_id =
-                    clip_buffer_ids.metadata.expect("Where's the clip metadata storage?");
-                let clip_metadata_buffer = core.allocator
-                                               .get_general_buffer(clip_metadata_buffer_id);
+                let clip_metadata_buffer_id = clip_buffer_ids.metadata.expect("Where's the clip metadata storage?");
+                let clip_metadata_buffer = core.allocator.get_general_buffer(clip_metadata_buffer_id);
                 let clip_tile_buffer = core.allocator.get_general_buffer(clip_buffer_ids.tiles);
                 storage_buffers.push((&propagate_program.clip_metadata_storage_buffer,
                                     clip_metadata_buffer));
@@ -598,10 +594,8 @@ impl<D> RendererD3D11<D> where D: Device {
             }
             None => {
                 // Just attach any old buffers to these, to satisfy Metal.
-                storage_buffers.push((&propagate_program.clip_metadata_storage_buffer,
-                                      propagate_metadata_storage_buffer));
-                storage_buffers.push((&propagate_program.clip_tiles_storage_buffer,
-                                      tiles_d3d11_buffer));
+                storage_buffers.push((&propagate_program.clip_metadata_storage_buffer, propagate_metadata_storage_buffer));
+                storage_buffers.push((&propagate_program.clip_tiles_storage_buffer, tiles_d3d11_buffer));
             }
         }
 

@@ -11,10 +11,10 @@
 use crate::gpu_data::{TILE_CTRL_MASK_0_SHIFT, TILE_CTRL_MASK_EVEN_ODD};
 use crate::gpu_data::{TILE_CTRL_MASK_WINDING, TileObjectPrimitive};
 use crate::paint::PaintId;
-use pathfinder_content::effects::BlendMode;
-use pathfinder_content::fill::FillRule;
-use pathfinder_geometry::rect::{RectF, RectI};
-use pathfinder_geometry::vector::vec2f;
+use ss_pathfinder_content::effects::BlendMode;
+use ss_pathfinder_content::fill::FillRule;
+use ss_pathfinder_geometry::rect::{RectF, RectI};
+use ss_pathfinder_geometry::vector::vec2f;
 
 pub const TILE_WIDTH: u32 = 16;
 pub const TILE_HEIGHT: u32 = 16;

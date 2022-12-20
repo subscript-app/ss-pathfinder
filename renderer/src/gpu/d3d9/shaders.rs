@@ -11,8 +11,8 @@
 //! Shaders and vertex specifications for the Direct3D 9-level renderer.
 
 use crate::gpu::shaders::{TILE_INSTANCE_SIZE, TileProgramCommon};
-use pathfinder_gpu::{BufferTarget, Device, VertexAttrClass, VertexAttrDescriptor, VertexAttrType};
-use pathfinder_resources::ResourceLoader;
+use ss_pathfinder_gpu::{BufferTarget, Device, VertexAttrClass, VertexAttrDescriptor, VertexAttrType};
+use ss_pathfinder_resources::ResourceLoader;
 
 const FILL_INSTANCE_SIZE: usize = 12;
 const CLIP_TILE_INSTANCE_SIZE: usize = 16;

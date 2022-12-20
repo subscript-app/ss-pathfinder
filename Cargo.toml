@@ -1,79 +1,55 @@
 [workspace]
 members = [
-    "c",
     "canvas",
     "color",
     "content",
-    "demo/android/rust",
-    "demo/common",
-    "demo/magicleap",
-    "demo/native",
-    "examples/canvas_glutin_minimal",
-    "examples/canvas_metal_minimal",
-    "examples/canvas_minimal",
-    "examples/canvas_moire",
-    "examples/canvas_nanovg",
-    "examples/canvas_text",
-    "examples/canvas_webgl_minimal",
-    "examples/lottie_basic",
-    "examples/swf_basic",
     "geometry",
-    "gl",
     "gpu",
-    "lottie",
-    "export",
-    "metal",
+    "metal_backend",
     "renderer",
     "resources",
     "simd",
-    "svg",
-    "swf",
-    "text",
     "ui",
-    "utils/area-lut",
-    "utils/gamma-lut",
-    "utils/svg-to-skia",
-    "utils/convert",
-    "web_canvas",
-    "webgl",
+    "export",
+    "vectorizer",
+    "vectorizer_c_api",
 ]
 
 default-members = [
-    "c",
     "canvas",
+    "color",
     "content",
-    "demo/common",
-    "demo/native",
-    "examples/canvas_glutin_minimal",
-    "examples/canvas_minimal",
-    "examples/canvas_moire",
-    "examples/canvas_text",
-    "examples/lottie_basic",
-    "examples/swf_basic",
     "geometry",
-    "gl",
     "gpu",
-    "lottie",
-    "export",
+    "metal_backend",
     "renderer",
+    "resources",
     "simd",
-    "svg",
-    "swf",
-    "text",
     "ui",
-    "utils/area-lut",
-    "utils/gamma-lut",
-    "utils/svg-to-skia",
-    "utils/convert",
+    "export",
+    "vectorizer",
+    "vectorizer_c_api",
 ]
 
-[patch.crates-io]
-pathfinder_geometry = { path = "geometry" }
-pathfinder_simd = { path = "simd" }
+exclude = [ "cross-build-bot" ]
 
-[patch."https://github.com/servo/pathfinder"]
-pathfinder_content = { path = "content" }
-pathfinder_color = { path = "color" }
-pathfinder_geometry = { path = "geometry" }
-pathfinder_renderer = { path = "renderer" }
-pathfinder_simd = { path = "simd" }
+# [patch.crates-io]
+# pathfinder_geometry = { path = "geometry" }
+# pathfinder_simd = { path = "simd" }
+
+# pathfinder_geometry = { path = "geometry" }
+# pathfinder_simd = { path = "simd" }
+
+# [patch."https://github.com/servo/pathfinder"]
+# pathfinder_geometry = { path = "geometry" }
+# pathfinder_content = { path = "content" }
+# pathfinder_color = { path = "color" }
+# pathfinder_renderer = { path = "renderer" }
+# pathfinder_simd = { path = "simd" }
+
+# pathfinder_geometry = { path = "geometry" }
+# pathfinder_content = { path = "content" }
+# pathfinder_color = { path = "color" }
+# pathfinder_renderer = { path = "renderer" }
+# pathfinder_simd = { path = "simd" }
+

@@ -1,3 +1,4 @@
+#![allow(unused)]
 // pathfinder/renderer/src/lib.rs
 //
 // Copyright © 2020 The Pathfinder Project Developers.

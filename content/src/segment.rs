@@ -10,11 +10,11 @@
 
 //! Single line or Bézier curve segments, optimized with SIMD.
 
-use pathfinder_geometry::line_segment::LineSegment2F;
-use pathfinder_geometry::transform2d::Transform2F;
-use pathfinder_geometry::util::EPSILON;
-use pathfinder_geometry::vector::{Vector2F, vec2f};
-use pathfinder_simd::default::F32x4;
+use ss_pathfinder_geometry::line_segment::LineSegment2F;
+use ss_pathfinder_geometry::transform2d::Transform2F;
+use ss_pathfinder_geometry::util::EPSILON;
+use ss_pathfinder_geometry::vector::{Vector2F, vec2f};
+use ss_pathfinder_simd::default::F32x4;
 use std::f32::consts::SQRT_2;
 
 /// A single line or Bézier curve segment, with explicit start and end points.

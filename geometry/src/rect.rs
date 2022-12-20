@@ -11,7 +11,7 @@
 //! 2D axis-aligned rectangles, optimized with SIMD.
 
 use crate::vector::{IntoVector2F, Vector2F, Vector2I};
-use pathfinder_simd::default::{F32x4, I32x4};
+use ss_pathfinder_simd::default::{F32x4, I32x4};
 use std::ops::{Add, AddAssign, Mul, MulAssign, Sub, SubAssign};
 
 #[derive(Clone, Copy, Debug, PartialEq, Default)]

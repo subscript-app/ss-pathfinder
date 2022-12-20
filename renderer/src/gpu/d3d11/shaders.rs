@@ -12,8 +12,8 @@
 
 use crate::gpu::shaders::TileProgramCommon;
 use crate::tiles::{TILE_HEIGHT, TILE_WIDTH};
-use pathfinder_gpu::{ComputeDimensions, Device};
-use pathfinder_resources::ResourceLoader;
+use ss_pathfinder_gpu::{ComputeDimensions, Device};
+use ss_pathfinder_resources::ResourceLoader;
 
 pub(crate) const BOUND_WORKGROUP_SIZE: u32 = 64;
 pub(crate) const DICE_WORKGROUP_SIZE: u32 = 64;

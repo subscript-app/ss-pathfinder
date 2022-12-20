@@ -12,11 +12,11 @@
 
 use crate::outline::{ArcDirection, Contour, ContourIterFlags, Outline, PushSegmentFlags};
 use crate::segment::Segment;
-use pathfinder_geometry::line_segment::LineSegment2F;
-use pathfinder_geometry::rect::RectF;
-use pathfinder_geometry::transform2d::Transform2F;
-use pathfinder_geometry::util::EPSILON;
-use pathfinder_geometry::vector::{Vector2F, vec2f};
+use ss_pathfinder_geometry::line_segment::LineSegment2F;
+use ss_pathfinder_geometry::rect::RectF;
+use ss_pathfinder_geometry::transform2d::Transform2F;
+use ss_pathfinder_geometry::util::EPSILON;
+use ss_pathfinder_geometry::vector::{Vector2F, vec2f};
 use std::f32;
 
 const TOLERANCE: f32 = 0.01;
@@ -26,9 +26,9 @@ const TOLERANCE: f32 = 0.01;
 /// An example of use:
 /// 
 /// ```no_run
-/// use pathfinder_content::stroke::OutlineStrokeToFill;
-/// use pathfinder_content::stroke::StrokeStyle;
-/// use pathfinder_content::outline::Outline;
+/// use ss_pathfinder_content::stroke::OutlineStrokeToFill;
+/// use ss_pathfinder_content::stroke::StrokeStyle;
+/// use ss_pathfinder_content::outline::Outline;
 ///
 /// let input_outline = Outline::new();
 ///

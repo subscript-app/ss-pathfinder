@@ -11,7 +11,7 @@
 //! A utility module that allows unit vectors to be treated like angles.
 
 use crate::vector::Vector2F;
-use pathfinder_simd::default::F32x2;
+use ss_pathfinder_simd::default::F32x2;
 
 #[derive(Clone, Copy, Debug)]
 pub struct UnitVector(pub Vector2F);

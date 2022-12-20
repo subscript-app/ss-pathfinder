@@ -12,8 +12,8 @@
 
 use crate::gpu_data::ColorCombineMode;
 use crate::paint::PaintCompositeOp;
-use pathfinder_content::effects::BlendMode;
-use pathfinder_gpu::{BlendFactor, BlendState};
+use ss_pathfinder_content::effects::BlendMode;
+use ss_pathfinder_gpu::{BlendFactor, BlendState};
 
 const COMBINER_CTRL_COLOR_COMBINE_SRC_IN:  i32 = 0x1;
 const COMBINER_CTRL_COLOR_COMBINE_DEST_IN: i32 = 0x2;

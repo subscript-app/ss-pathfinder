@@ -10,7 +10,7 @@
 
 //! A SIMD-optimized point type.
 
-use pathfinder_simd::default::{F32x2, F32x4, I32x2};
+use ss_pathfinder_simd::default::{F32x2, F32x4, I32x2};
 use std::hash::{Hash, Hasher};
 use std::ops::{Add, AddAssign, Div, Mul, MulAssign, Neg, Sub, SubAssign};
 
@@ -321,6 +321,12 @@ impl IntoVector2F for f32 {
 #[derive(Clone, Copy, Debug, Default)]
 pub struct Vector2I(pub I32x2);
 
+impl From<(i32, i32)> for Vector2I {
+    fn from((x, y): (i32, i32)) -> Self {
+        Vector2I::new(x as i32, y as i32)
+    }
+}
+
 impl Vector2I {
     #[inline]
     pub fn new(x: i32, y: i32) -> Vector2I {
@@ -345,6 +351,10 @@ impl Vector2I {
     #[inline]
     pub fn y(self) -> i32 {
         self.0[1]
+    }
+
+    pub fn tuple(self) -> (i32, i32) {
+        (self.x(), self.y())
     }
 
     #[inline]

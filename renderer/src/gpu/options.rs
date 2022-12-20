@@ -10,10 +10,10 @@
 
 //! Various options that control how the renderer behaves.
 
-use pathfinder_color::ColorF;
-use pathfinder_geometry::rect::RectI;
-use pathfinder_geometry::vector::Vector2I;
-use pathfinder_gpu::{Device, FeatureLevel};
+use ss_pathfinder_color::ColorF;
+use ss_pathfinder_geometry::rect::RectI;
+use ss_pathfinder_geometry::vector::Vector2I;
+use ss_pathfinder_gpu::{Device, FeatureLevel};
 
 /// Renderer options that can't be changed after the renderer is created.
 pub struct RendererMode {

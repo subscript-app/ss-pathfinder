@@ -11,8 +11,8 @@
 //! A simple quadtree-based texture allocator.
 
 use crate::gpu_data::{TextureLocation, TexturePageId};
-use pathfinder_geometry::rect::RectI;
-use pathfinder_geometry::vector::{Vector2F, Vector2I, vec2f, vec2i};
+use ss_pathfinder_geometry::rect::RectI;
+use ss_pathfinder_geometry::vector::{Vector2F, Vector2I, vec2f, vec2i};
 
 const ATLAS_TEXTURE_LENGTH: u32 = 1024;
 
@@ -364,7 +364,7 @@ impl<'a> Iterator for TexturePageIter<'a> {
 
 #[cfg(test)]
 mod test {
-    use pathfinder_geometry::vector::vec2i;
+    use ss_pathfinder_geometry::vector::vec2i;
     use quickcheck;
     use std::u32;
 

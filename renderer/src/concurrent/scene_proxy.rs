@@ -26,8 +26,8 @@ use crate::gpu_data::RenderCommand;
 use crate::options::{BuildOptions, RenderCommandListener};
 use crate::scene::{Scene, SceneSink};
 use crossbeam_channel::{self, Receiver, Sender};
-use pathfinder_geometry::rect::RectF;
-use pathfinder_gpu::Device;
+use ss_pathfinder_geometry::rect::RectF;
+use ss_pathfinder_gpu::Device;
 use std::thread;
 
 const MAX_MESSAGES_IN_FLIGHT: usize = 1024;
@@ -93,7 +93,10 @@ impl SceneProxy {
     #[inline]
     pub fn render<D>(&mut self, renderer: &mut Renderer<D>) where D: Device {
         renderer.begin_scene();
-        while let Ok(command) = self.receiver.recv() {
+        while let Ok(command) = {
+            let payload = self.receiver.recv();
+            payload
+        } {
             renderer.render_command(&command);
             match command {
                 RenderCommand::Finish { .. } => break,
@@ -113,8 +116,7 @@ impl SceneProxy {
     /// scene_proxy.render(renderer);
     /// ```
     #[inline]
-    pub fn build_and_render<D>(&mut self, renderer: &mut Renderer<D>, build_options: BuildOptions)
-                               where D: Device {
+    pub fn build_and_render<D>(&mut self, renderer: &mut Renderer<D>, build_options: BuildOptions) where D: Device {
         self.build(build_options);
         self.render(renderer);
     }

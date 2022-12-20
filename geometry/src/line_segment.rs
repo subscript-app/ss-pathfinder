@@ -13,7 +13,7 @@
 use crate::transform2d::Matrix2x2F;
 use crate::util;
 use crate::vector::{Vector2F, vec2f};
-use pathfinder_simd::default::F32x4;
+use ss_pathfinder_simd::default::F32x4;
 use std::ops::{Add, Mul, MulAssign, Sub};
 
 #[derive(Clone, Copy, Debug, PartialEq, Default)]

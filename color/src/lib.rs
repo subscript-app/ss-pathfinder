@@ -1,3 +1,4 @@
+#![allow(unused)]
 // pathfinder/color/src/lib.rs
 //
 // Copyright © 2020 The Pathfinder Project Developers.
@@ -8,7 +9,7 @@
 // option. This file may not be copied, modified, or distributed
 // except according to those terms.
 
-use pathfinder_simd::default::F32x4;
+use ss_pathfinder_simd::default::F32x4;
 use std::f32::consts::PI;
 use std::fmt::{self, Debug, Formatter};
 use std::slice;
@@ -48,23 +49,29 @@ impl ColorU {
 
     #[inline]
     pub const fn black() -> ColorU {
-        ColorU {
-            r: 0,
-            g: 0,
-            b: 0,
-            a: 255,
-        }
+        ColorU { r: 0, g: 0, b: 0, a: 255 }
     }
 
     #[inline]
     pub const fn white() -> ColorU {
-        ColorU {
-            r: 255,
-            g: 255,
-            b: 255,
-            a: 255,
-        }
+        ColorU { r: 255, g: 255, b: 255, a: 255 }
     }
+
+    #[inline]
+    pub const fn red() -> ColorU {
+        ColorU { r: 255, g: 0, b: 0, a: 255 }
+    }
+    
+    #[inline]
+    pub const fn green() -> ColorU {
+        ColorU { r: 0, g: 255, b: 0, a: 255 }
+    }
+
+    #[inline]
+    pub const fn blue() -> ColorU {
+        ColorU { r: 0, g: 0, b: 255, a: 255 }
+    }
+
 
     #[inline]
     pub fn to_f32(&self) -> ColorF {

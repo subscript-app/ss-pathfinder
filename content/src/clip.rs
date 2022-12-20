@@ -15,10 +15,10 @@
 use crate::outline::{Contour, ContourIterFlags, PointFlags, PushSegmentFlags};
 use crate::segment::{CubicSegment, Segment};
 use arrayvec::ArrayVec;
-use pathfinder_geometry::line_segment::LineSegment2F;
-use pathfinder_geometry::rect::RectF;
-use pathfinder_geometry::util::lerp;
-use pathfinder_geometry::vector::{Vector2F, Vector4F, vec2f};
+use ss_pathfinder_geometry::line_segment::LineSegment2F;
+use ss_pathfinder_geometry::rect::RectF;
+use ss_pathfinder_geometry::util::lerp;
+use ss_pathfinder_geometry::vector::{Vector2F, Vector4F, vec2f};
 use smallvec::SmallVec;
 use std::fmt::Debug;
 use std::mem;
