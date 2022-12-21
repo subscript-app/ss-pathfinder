@@ -1,7 +1,6 @@
-use ss_pathfinder_color::{ColorF, ColorU};
 use ss_pathfinder_canvas::{Canvas, CanvasFontContext, Path2D};
-use ss_pathfinder_geometry::vector::{Vector2I, Vector2F, Vector4F};
-
+use ss_pathfinder_color::{ColorF, ColorU};
+use ss_pathfinder_geometry::vector::{Vector2F, Vector2I, Vector4F};
 
 //―――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――
 // DATA TYPES
@@ -22,9 +21,8 @@ pub struct VShape {
 #[derive(Debug, Clone)]
 pub enum ShapeType {
     Fill,
-    Stroke {line_width: f32},
+    Stroke { line_width: f32 },
 }
-
 
 //―――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――
 // API
@@ -43,7 +41,7 @@ impl VShape {
     pub fn from_iter<T: Into<Vector2F>>(
         shape_type: ShapeType,
         color: ColorU,
-        points: impl IntoIterator<Item = T>
+        points: impl IntoIterator<Item = T>,
     ) -> VShape {
         let mut path = Path2D::new();
         for (ix, point) in points.into_iter().enumerate() {
@@ -53,7 +51,11 @@ impl VShape {
             }
             path.line_to(point.into());
         }
-        VShape { path, color, shape_type }
+        VShape {
+            path,
+            color,
+            shape_type,
+        }
     }
 
     pub fn from_mapped_iter<T, U: Into<Vector2F>>(
@@ -70,6 +72,10 @@ impl VShape {
             }
             path.line_to(point.into());
         }
-        VShape { path, color, shape_type }
+        VShape {
+            path,
+            color,
+            shape_type,
+        }
     }
 }

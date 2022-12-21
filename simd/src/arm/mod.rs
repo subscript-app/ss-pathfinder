@@ -200,7 +200,6 @@ impl IndexMut<usize> for F32x2 {
     }
 }
 
-
 impl Add<F32x2> for F32x2 {
     type Output = F32x2;
     #[inline]
@@ -823,7 +822,6 @@ impl BitOr<U32x2> for U32x2 {
         unsafe { U32x2(simd_or(self.0, other.0)) }
     }
 }
-
 
 // Four 32-bit unsigned integers
 

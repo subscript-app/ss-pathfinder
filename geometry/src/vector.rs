@@ -36,12 +36,20 @@ impl Vector2F {
 
     #[inline]
     pub fn to_3d(self) -> Vector3F {
-        Vector3F(self.0.to_f32x4().concat_xy_zw(F32x4::new(0.0, 0.0, 0.0, 0.0)))
+        Vector3F(
+            self.0
+                .to_f32x4()
+                .concat_xy_zw(F32x4::new(0.0, 0.0, 0.0, 0.0)),
+        )
     }
 
     #[inline]
     pub fn to_4d(self) -> Vector4F {
-        Vector4F(self.0.to_f32x4().concat_xy_zw(F32x4::new(0.0, 0.0, 0.0, 1.0)))
+        Vector4F(
+            self.0
+                .to_f32x4()
+                .concat_xy_zw(F32x4::new(0.0, 0.0, 0.0, 1.0)),
+        )
     }
 
     #[inline]
@@ -294,9 +302,9 @@ impl Neg for Vector2F {
 }
 
 /// Either a scalar or a `Vector2F`.
-/// 
+///
 /// Scalars will be automatically splatted (i.e. `x` becomes `vec2f(x, x)`).
-/// 
+///
 /// Be judicious with the use of this trait. Only use it if it will aid readability without the
 /// potential to introduce bugs.
 pub trait IntoVector2F {
@@ -468,7 +476,10 @@ impl Eq for Vector2I {}
 
 impl Hash for Vector2I {
     #[inline]
-    fn hash<H>(&self, state: &mut H) where H: Hasher {
+    fn hash<H>(&self, state: &mut H)
+    where
+        H: Hasher,
+    {
         self.x().hash(state);
         self.y().hash(state);
     }

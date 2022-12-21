@@ -12,7 +12,7 @@
 
 use crate::gpu_data::{TextureLocation, TexturePageId};
 use ss_pathfinder_geometry::rect::RectI;
-use ss_pathfinder_geometry::vector::{Vector2F, Vector2I, vec2f, vec2i};
+use ss_pathfinder_geometry::vector::{vec2f, vec2i, Vector2F, Vector2I};
 
 const ATLAS_TEXTURE_LENGTH: u32 = 1024;
 
@@ -64,9 +64,10 @@ impl TextureAllocator {
 
     pub fn allocate(&mut self, requested_size: Vector2I, mode: AllocationMode) -> TextureLocation {
         // If requested, or if the image is too big, use a separate page.
-        if mode == AllocationMode::OwnPage ||
-                requested_size.x() > ATLAS_TEXTURE_LENGTH as i32 ||
-                requested_size.y() > ATLAS_TEXTURE_LENGTH as i32 {
+        if mode == AllocationMode::OwnPage
+            || requested_size.x() > ATLAS_TEXTURE_LENGTH as i32
+            || requested_size.y() > ATLAS_TEXTURE_LENGTH as i32
+        {
             return self.allocate_image(requested_size);
         }
 
@@ -74,19 +75,17 @@ impl TextureAllocator {
         let mut first_free_page_index = self.pages.len();
         for (page_index, page) in self.pages.iter_mut().enumerate() {
             match *page {
-                Some(ref mut page) => {
-                    match page.allocator {
-                        TexturePageAllocator::Image { .. } => {}
-                        TexturePageAllocator::Atlas(ref mut allocator) => {
-                            if let Some(rect) = allocator.allocate(requested_size) {
-                                return TextureLocation {
-                                    page: TexturePageId(page_index as u32),
-                                    rect
-                                };
-                            }
+                Some(ref mut page) => match page.allocator {
+                    TexturePageAllocator::Image { .. } => {}
+                    TexturePageAllocator::Atlas(ref mut allocator) => {
+                        if let Some(rect) = allocator.allocate(requested_size) {
+                            return TextureLocation {
+                                page: TexturePageId(page_index as u32),
+                                rect,
+                            };
                         }
                     }
-                }
+                },
                 None => first_free_page_index = first_free_page_index.min(page_index),
             }
         }
@@ -94,7 +93,9 @@ impl TextureAllocator {
         // Add a new atlas.
         let page = self.get_first_free_page_id();
         let mut allocator = TextureAtlasAllocator::new();
-        let rect = allocator.allocate(requested_size).expect("Allocation failed!");
+        let rect = allocator
+            .allocate(requested_size)
+            .expect("Allocation failed!");
         while (page.0 as usize) >= self.pages.len() {
             self.pages.push(None);
         }
@@ -130,9 +131,10 @@ impl TextureAllocator {
     pub fn free(&mut self, location: TextureLocation) {
         //println!("free({:?})", location);
         match self.pages[location.page.0 as usize]
-                  .as_mut()
-                  .expect("Texture page is not allocated!")
-                  .allocator {
+            .as_mut()
+            .expect("Texture page is not allocated!")
+            .allocator
+        {
             TexturePageAllocator::Image { size } => {
                 debug_assert_eq!(location.rect, RectI::new(Vector2I::default(), size));
             }
@@ -151,7 +153,11 @@ impl TextureAllocator {
     }
 
     pub fn page_size(&self, page_id: TexturePageId) -> Vector2I {
-        match self.pages[page_id.0 as usize].as_ref().expect("No such texture page!").allocator {
+        match self.pages[page_id.0 as usize]
+            .as_ref()
+            .expect("No such texture page!")
+            .allocator
+        {
             TexturePageAllocator::Atlas(ref atlas) => Vector2I::splat(atlas.size as i32),
             TexturePageAllocator::Image { size, .. } => size,
         }
@@ -162,7 +168,10 @@ impl TextureAllocator {
     }
 
     pub fn page_is_new(&self, page_id: TexturePageId) -> bool {
-        self.pages[page_id.0 as usize].as_ref().expect("No such texture page!").is_new
+        self.pages[page_id.0 as usize]
+            .as_ref()
+            .expect("No such texture page!")
+            .is_new
     }
 
     pub fn mark_all_pages_as_allocated(&mut self) {
@@ -178,7 +187,10 @@ impl TextureAllocator {
         while first_index < self.pages.len() && self.pages[first_index].is_none() {
             first_index += 1;
         }
-        TexturePageIter { allocator: self, next_index: first_index }
+        TexturePageIter {
+            allocator: self,
+            next_index: first_index,
+        }
     }
 }
 
@@ -190,20 +202,29 @@ impl TextureAtlasAllocator {
 
     #[inline]
     fn with_length(length: u32) -> TextureAtlasAllocator {
-        TextureAtlasAllocator { root: TreeNode::EmptyLeaf, size: length }
+        TextureAtlasAllocator {
+            root: TreeNode::EmptyLeaf,
+            size: length,
+        }
     }
 
     #[inline]
     fn allocate(&mut self, requested_size: Vector2I) -> Option<RectI> {
         let requested_length =
             (requested_size.x().max(requested_size.y()) as u32).next_power_of_two();
-        self.root.allocate(Vector2I::default(), self.size, requested_length)
+        self.root
+            .allocate(Vector2I::default(), self.size, requested_length)
     }
 
     #[inline]
     fn free(&mut self, rect: RectI) {
         let requested_length = rect.width() as u32;
-        self.root.free(Vector2I::default(), self.size, rect.origin(), requested_length)
+        self.root.free(
+            Vector2I::default(),
+            self.size,
+            rect.origin(),
+            requested_length,
+        )
     }
 
     #[inline]
@@ -218,8 +239,12 @@ impl TextureAtlasAllocator {
 
 impl TreeNode {
     // Invariant: `requested_size` must be a power of two.
-    fn allocate(&mut self, this_origin: Vector2I, this_size: u32, requested_size: u32)
-                -> Option<RectI> {
+    fn allocate(
+        &mut self,
+        this_origin: Vector2I,
+        this_size: u32,
+        requested_size: u32,
+    ) -> Option<RectI> {
         if let TreeNode::FullLeaf = *self {
             // No room here.
             return None;
@@ -253,19 +278,23 @@ impl TreeNode {
                 if let Some(origin) = kids[0].allocate(this_origin, kid_size, requested_size) {
                     return Some(origin);
                 }
-                if let Some(origin) = kids[1].allocate(this_origin + vec2i(kid_size as i32, 0),
-                                                       kid_size,
-                                                       requested_size) {
+                if let Some(origin) = kids[1].allocate(
+                    this_origin + vec2i(kid_size as i32, 0),
+                    kid_size,
+                    requested_size,
+                ) {
                     return Some(origin);
                 }
-                if let Some(origin) = kids[2].allocate(this_origin + vec2i(0, kid_size as i32),
-                                                       kid_size,
-                                                       requested_size) {
+                if let Some(origin) = kids[2].allocate(
+                    this_origin + vec2i(0, kid_size as i32),
+                    kid_size,
+                    requested_size,
+                ) {
                     return Some(origin);
                 }
-                if let Some(origin) = kids[3].allocate(this_origin + kid_size as i32,
-                                                       kid_size,
-                                                       requested_size) {
+                if let Some(origin) =
+                    kids[3].allocate(this_origin + kid_size as i32, kid_size, requested_size)
+                {
                     return Some(origin);
                 }
 
@@ -277,11 +306,13 @@ impl TreeNode {
     }
 
     #[allow(dead_code)]
-    fn free(&mut self,
-            this_origin: Vector2I,
-            this_size: u32,
-            requested_origin: Vector2I,
-            requested_size: u32) {
+    fn free(
+        &mut self,
+        this_origin: Vector2I,
+        this_size: u32,
+        requested_origin: Vector2I,
+        requested_size: u32,
+    ) {
         if this_size <= requested_size {
             if this_size == requested_size && this_origin == requested_origin {
                 *self = TreeNode::EmptyLeaf;
@@ -324,11 +355,9 @@ impl TreeNode {
     fn merge_if_necessary(&mut self) {
         match *self {
             TreeNode::Parent(ref mut kids) => {
-                if kids.iter().all(|kid| {
-                    match **kid {
-                        TreeNode::EmptyLeaf => true,
-                        _ => false,
-                    }
+                if kids.iter().all(|kid| match **kid {
+                    TreeNode::EmptyLeaf => true,
+                    _ => false,
                 }) {
                     *self = TreeNode::EmptyLeaf;
                 }
@@ -353,8 +382,9 @@ impl<'a> Iterator for TexturePageIter<'a> {
         };
         loop {
             self.next_index += 1;
-            if self.next_index >= self.allocator.pages.len() ||
-                    self.allocator.pages[self.next_index as usize].is_some() {
+            if self.next_index >= self.allocator.pages.len()
+                || self.allocator.pages[self.next_index as usize].is_some()
+            {
                 break;
             }
         }
@@ -364,16 +394,17 @@ impl<'a> Iterator for TexturePageIter<'a> {
 
 #[cfg(test)]
 mod test {
-    use ss_pathfinder_geometry::vector::vec2i;
     use quickcheck;
+    use ss_pathfinder_geometry::vector::vec2i;
     use std::u32;
 
     use super::TextureAtlasAllocator;
 
     #[test]
     fn test_allocation_and_freeing() {
-        quickcheck::quickcheck(prop_allocation_and_freeing_work as
-                               fn(u32, Vec<(u32, u32)>) -> bool);
+        quickcheck::quickcheck(
+            prop_allocation_and_freeing_work as fn(u32, Vec<(u32, u32)>) -> bool,
+        );
 
         fn prop_allocation_and_freeing_work(mut length: u32, mut sizes: Vec<(u32, u32)>) -> bool {
             length = u32::next_power_of_two(length).max(1);

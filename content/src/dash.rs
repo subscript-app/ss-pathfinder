@@ -38,7 +38,11 @@ impl<'a> OutlineDash<'a> {
     ///   <https://developer.mozilla.org/en-US/docs/Web/API/CanvasRenderingContext2D/lineDashOffset>.
     #[inline]
     pub fn new(input: &'a Outline, dashes: &'a [f32], offset: f32) -> OutlineDash<'a> {
-        OutlineDash { input, output: Outline::new(), state: DashState::new(dashes, offset) }
+        OutlineDash {
+            input,
+            output: Outline::new(),
+            state: DashState::new(dashes, offset),
+        }
     }
 
     /// Performs the dashing operation.
@@ -66,9 +70,16 @@ struct ContourDash<'a, 'b, 'c> {
 }
 
 impl<'a, 'b, 'c> ContourDash<'a, 'b, 'c> {
-    fn new(input: &'a Contour, output: &'b mut Outline, state: &'c mut DashState<'a>)
-           -> ContourDash<'a, 'b, 'c> {
-        ContourDash { input, output, state }
+    fn new(
+        input: &'a Contour,
+        output: &'b mut Outline,
+        state: &'c mut DashState<'a>,
+    ) -> ContourDash<'a, 'b, 'c> {
+        ContourDash {
+            input,
+            output,
+            state,
+        }
     }
 
     fn dash(&mut self) {
@@ -95,13 +106,16 @@ impl<'a, 'b, 'c> ContourDash<'a, 'b, 'c> {
             }
 
             if self.state.is_on() {
-                self.state.output.push_segment(&current_segment, PushSegmentFlags::empty());
+                self.state
+                    .output
+                    .push_segment(&current_segment, PushSegmentFlags::empty());
             }
 
             self.state.distance_left -= distance;
             if self.state.distance_left < EPSILON {
                 if self.state.is_on() {
-                    self.output.push_contour(mem::replace(&mut self.state.output, Contour::new()));
+                    self.output
+                        .push_contour(mem::replace(&mut self.state.output, Contour::new()));
                 }
 
                 self.state.current_dash_index += 1;

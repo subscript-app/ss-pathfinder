@@ -18,14 +18,11 @@ use std::io::{self, Write};
 
 struct Counter<T> {
     inner: T,
-    count: u64
+    count: u64,
 }
 impl<T> Counter<T> {
     pub fn new(inner: T) -> Counter<T> {
-        Counter {
-            inner,
-            count: 0
-        }
+        Counter { inner, count: 0 }
     }
     pub fn pos(&self) -> u64 {
         self.count
@@ -37,8 +34,8 @@ impl<W: Write> Write for Counter<W> {
             Ok(n) => {
                 self.count += n as u64;
                 Ok(n)
-            },
-            Err(e) => Err(e)
+            }
+            Err(e) => Err(e),
         }
     }
     fn flush(&mut self) -> io::Result<()> {
@@ -95,7 +92,7 @@ impl Pdf {
                 },
             ],
             page_size: None,
-            compression: Some(Compression::Fast)
+            compression: Some(Compression::Fast),
         }
     }
 
@@ -113,11 +110,14 @@ impl Pdf {
     #[inline]
     pub fn set_fill_color(&mut self, color: ColorU) {
         let norm = |color| f32::from(color) / 255.0;
-        writeln!(self.page_buffer, "{} {} {} rg",
+        writeln!(
+            self.page_buffer,
+            "{} {} {} rg",
             norm(color.r),
             norm(color.g),
             norm(color.b)
-        ).unwrap();
+        )
+        .unwrap();
     }
 
     /// Move to a new page in the PDF document
@@ -134,7 +134,7 @@ impl Pdf {
         self.page_size = Some(size);
     }
 
-    pub fn move_to(&mut self, p: Vector2F)  {
+    pub fn move_to(&mut self, p: Vector2F) {
         writeln!(self.page_buffer, "{} {} m", p.x(), p.y()).unwrap();
     }
 
@@ -143,7 +143,17 @@ impl Pdf {
     }
 
     pub fn cubic_to(&mut self, c1: Vector2F, c2: Vector2F, p: Vector2F) {
-        writeln!(self.page_buffer, "{} {} {} {} {} {} c", c1.x(), c1.y(), c2.x(), c2.y(), p.x(), p.y()).unwrap();
+        writeln!(
+            self.page_buffer,
+            "{} {} {} {} {} {} c",
+            c1.x(),
+            c1.y(),
+            c2.x(),
+            c2.y(),
+            p.x(),
+            p.y()
+        )
+        .unwrap();
     }
     pub fn fill(&mut self) {
         writeln!(self.page_buffer, "f").unwrap();
@@ -156,7 +166,7 @@ impl Pdf {
     fn end_page(&mut self) {
         let size = match self.page_size.take() {
             Some(size) => size,
-            None => return // no page started
+            None => return, // no page started
         };
         let page_stream = if let Some(level) = self.compression {
             let compressed = deflate::deflate_bytes_zlib_conf(&self.page_buffer, level);
@@ -185,22 +195,34 @@ impl Pdf {
             /Resources <<\n"
             .to_vec();
 
-        for (idx, _obj) in self.objects.iter().enumerate().filter(|&(_, o)| o.is_xobject) {
-            write!(page_object, "/XObject {} 0 R ", idx+1).unwrap();
+        for (idx, _obj) in self
+            .objects
+            .iter()
+            .enumerate()
+            .filter(|&(_, o)| o.is_xobject)
+        {
+            write!(page_object, "/XObject {} 0 R ", idx + 1).unwrap();
         }
 
-        write!(page_object,
+        write!(
+            page_object,
             " >>\n \
                 /MediaBox [0 0 {} {}]\n \
                 /Contents {} 0 R\n\
                 >>\n",
-            size.x(), size.y(), stream_object_id
-        ).unwrap();
+            size.x(),
+            size.y(),
+            stream_object_id
+        )
+        .unwrap();
         self.add_object(page_object, true, false);
     }
 
     /// Write the in-memory PDF representation to disk
-    pub fn write_to<W>(&mut self, writer: W) -> io::Result<()> where W: Write {
+    pub fn write_to<W>(&mut self, writer: W) -> io::Result<()>
+    where
+        W: Write,
+    {
         let mut out = Counter::new(writer);
         out.write_all(b"%PDF-1.7\n%\xB5\xED\xAE\xFB\n")?;
 
@@ -211,7 +233,7 @@ impl Pdf {
         // Write out each object
         for (idx, obj) in self.objects.iter_mut().enumerate().skip(2) {
             obj.offset = Some(out.pos());
-            write!(out, "{} 0 obj\n", idx+1)?;
+            write!(out, "{} 0 obj\n", idx + 1)?;
             out.write_all(&obj.contents)?;
             out.write_all(b"endobj\n")?;
         }
@@ -220,12 +242,18 @@ impl Pdf {
         self.objects[1].offset = Some(out.pos());
         out.write_all(b"2 0 obj\n")?;
         out.write_all(b"<< /Type /Pages\n")?;
-        write!(out,
+        write!(
+            out,
             "/Count {}\n",
             self.objects.iter().filter(|o| o.is_page).count()
         )?;
         out.write_all(b"/Kids [")?;
-        for (idx, _obj) in self.objects.iter().enumerate().filter(|&(_, obj)| obj.is_page) {
+        for (idx, _obj) in self
+            .objects
+            .iter()
+            .enumerate()
+            .filter(|&(_, obj)| obj.is_page)
+        {
             write!(out, "{} 0 R ", idx + 1)?;
         }
         out.write_all(b"] >>\nendobj\n")?;

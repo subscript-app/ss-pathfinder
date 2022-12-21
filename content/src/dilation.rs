@@ -10,7 +10,7 @@
 
 use crate::orientation::Orientation;
 use crate::outline::Contour;
-use ss_pathfinder_geometry::vector::{Vector2F, vec2f};
+use ss_pathfinder_geometry::vector::{vec2f, Vector2F};
 
 pub struct ContourDilator<'a> {
     contour: &'a mut Contour,
@@ -33,10 +33,11 @@ impl<'a> ContourDilator<'a> {
 
     pub fn dilate(&mut self) {
         // Determine orientation.
-        let scale = self.amount * (match self.orientation {
-            Orientation::Ccw => vec2f( 1.0, -1.0),
-            Orientation::Cw  => vec2f(-1.0,  1.0),
-        });
+        let scale = self.amount
+            * (match self.orientation {
+                Orientation::Ccw => vec2f(1.0, -1.0),
+                Orientation::Cw => vec2f(-1.0, 1.0),
+            });
 
         // Find the starting and previous positions.
         let first_position = self.contour.position_of(0);

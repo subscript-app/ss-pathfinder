@@ -13,7 +13,7 @@
 use ss_pathfinder_geometry::line_segment::LineSegment2F;
 use ss_pathfinder_geometry::transform2d::Transform2F;
 use ss_pathfinder_geometry::util::EPSILON;
-use ss_pathfinder_geometry::vector::{Vector2F, vec2f};
+use ss_pathfinder_geometry::vector::{vec2f, Vector2F};
 use ss_pathfinder_simd::default::F32x4;
 use std::f32::consts::SQRT_2;
 
@@ -100,8 +100,12 @@ impl Segment {
             return Segment::line(LineSegment2F::new(vec2f(1.0, 0.0), vec2f(1.0, 0.0)));
         }
 
-        let term = F32x4::new(cos_sweep_angle, -cos_sweep_angle,
-                              cos_sweep_angle, -cos_sweep_angle);
+        let term = F32x4::new(
+            cos_sweep_angle,
+            -cos_sweep_angle,
+            cos_sweep_angle,
+            -cos_sweep_angle,
+        );
         let signs = F32x4::new(1.0, -1.0, 1.0, 1.0);
         let p3p0 = ((F32x4::splat(1.0) + term) * F32x4::splat(0.5)).sqrt() * signs;
         let (p0x, p0y) = (p3p0.z(), p3p0.w());
@@ -175,8 +179,9 @@ impl Segment {
 
         let mut new_segment = *self;
         let p1_2 = self.ctrl.from() + self.ctrl.from();
-        new_segment.ctrl = LineSegment2F::new(self.baseline.from() + p1_2,
-                                              p1_2 + self.baseline.to()) * (1.0 / 3.0);
+        new_segment.ctrl =
+            LineSegment2F::new(self.baseline.from() + p1_2, p1_2 + self.baseline.to())
+                * (1.0 / 3.0);
         new_segment.kind = SegmentKind::Cubic;
         new_segment
     }

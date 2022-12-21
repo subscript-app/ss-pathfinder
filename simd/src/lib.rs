@@ -8,7 +8,6 @@
 // <LICENSE-MIT or http://opensource.org/licenses/MIT>, at your
 // option. This file may not be copied, modified, or distributed
 // except according to those terms.
-
 #![cfg_attr(pf_rustc_nightly, feature(link_llvm_intrinsics, platform_intrinsics))]
 #![cfg_attr(pf_rustc_nightly, feature(simd_ffi, stdsimd))]
 

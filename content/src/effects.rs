@@ -10,7 +10,7 @@
 
 //! Special effects that can be applied to layers.
 
-use ss_pathfinder_color::{ColorF, matrix::ColorMatrix};
+use ss_pathfinder_color::{matrix::ColorMatrix, ColorF};
 use ss_pathfinder_geometry::line_segment::LineSegment2F;
 use ss_pathfinder_geometry::vector::Vector2F;
 use ss_pathfinder_simd::default::F32x2;
@@ -88,7 +88,7 @@ pub enum PatternFilter {
     },
 
     /// A color matrix multiplication.
-    /// 
+    ///
     /// The matrix is stored in 5 columns of `F32x4`. See the `feColorMatrix` element in the SVG
     /// specification.
     ColorMatrix(ColorMatrix),
@@ -202,64 +202,64 @@ impl BlendMode {
     pub fn occludes_backdrop(self) -> bool {
         match self {
             BlendMode::SrcOver | BlendMode::Clear => true,
-            BlendMode::DestOver |
-            BlendMode::DestOut |
-            BlendMode::SrcAtop |
-            BlendMode::Xor |
-            BlendMode::Lighter |
-            BlendMode::Lighten |
-            BlendMode::Darken |
-            BlendMode::Copy |
-            BlendMode::SrcIn |
-            BlendMode::DestIn |
-            BlendMode::SrcOut |
-            BlendMode::DestAtop |
-            BlendMode::Multiply |
-            BlendMode::Screen |
-            BlendMode::HardLight |
-            BlendMode::Overlay |
-            BlendMode::ColorDodge |
-            BlendMode::ColorBurn |
-            BlendMode::SoftLight |
-            BlendMode::Difference |
-            BlendMode::Exclusion |
-            BlendMode::Hue |
-            BlendMode::Saturation |
-            BlendMode::Color |
-            BlendMode::Luminosity => false,
+            BlendMode::DestOver
+            | BlendMode::DestOut
+            | BlendMode::SrcAtop
+            | BlendMode::Xor
+            | BlendMode::Lighter
+            | BlendMode::Lighten
+            | BlendMode::Darken
+            | BlendMode::Copy
+            | BlendMode::SrcIn
+            | BlendMode::DestIn
+            | BlendMode::SrcOut
+            | BlendMode::DestAtop
+            | BlendMode::Multiply
+            | BlendMode::Screen
+            | BlendMode::HardLight
+            | BlendMode::Overlay
+            | BlendMode::ColorDodge
+            | BlendMode::ColorBurn
+            | BlendMode::SoftLight
+            | BlendMode::Difference
+            | BlendMode::Exclusion
+            | BlendMode::Hue
+            | BlendMode::Saturation
+            | BlendMode::Color
+            | BlendMode::Luminosity => false,
         }
     }
 
     /// True if this blend mode does not preserve destination areas outside the source.
     pub fn is_destructive(self) -> bool {
         match self {
-            BlendMode::Clear |
-            BlendMode::Copy |
-            BlendMode::SrcIn |
-            BlendMode::DestIn |
-            BlendMode::SrcOut |
-            BlendMode::DestAtop => true,
-            BlendMode::SrcOver |
-            BlendMode::DestOver |
-            BlendMode::DestOut |
-            BlendMode::SrcAtop |
-            BlendMode::Xor |
-            BlendMode::Lighter |
-            BlendMode::Lighten |
-            BlendMode::Darken |
-            BlendMode::Multiply |
-            BlendMode::Screen |
-            BlendMode::HardLight |
-            BlendMode::Overlay |
-            BlendMode::ColorDodge |
-            BlendMode::ColorBurn |
-            BlendMode::SoftLight |
-            BlendMode::Difference |
-            BlendMode::Exclusion |
-            BlendMode::Hue |
-            BlendMode::Saturation |
-            BlendMode::Color |
-            BlendMode::Luminosity => false,
+            BlendMode::Clear
+            | BlendMode::Copy
+            | BlendMode::SrcIn
+            | BlendMode::DestIn
+            | BlendMode::SrcOut
+            | BlendMode::DestAtop => true,
+            BlendMode::SrcOver
+            | BlendMode::DestOver
+            | BlendMode::DestOut
+            | BlendMode::SrcAtop
+            | BlendMode::Xor
+            | BlendMode::Lighter
+            | BlendMode::Lighten
+            | BlendMode::Darken
+            | BlendMode::Multiply
+            | BlendMode::Screen
+            | BlendMode::HardLight
+            | BlendMode::Overlay
+            | BlendMode::ColorDodge
+            | BlendMode::ColorBurn
+            | BlendMode::SoftLight
+            | BlendMode::Difference
+            | BlendMode::Exclusion
+            | BlendMode::Hue
+            | BlendMode::Saturation
+            | BlendMode::Color
+            | BlendMode::Luminosity => false,
         }
     }
 }

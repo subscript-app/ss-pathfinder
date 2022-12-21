@@ -74,7 +74,7 @@ impl Transform4F {
             c0: F32x4::new(scale.x(), 0.0, 0.0, 0.0),
             c1: F32x4::new(0.0, scale.y(), 0.0, 0.0),
             c2: F32x4::new(0.0, 0.0, scale.z(), 0.0),
-            c3: F32x4::new(0.0, 0.0, 0.0,       1.0),
+            c3: F32x4::new(0.0, 0.0, 0.0, 1.0),
         }
     }
 
@@ -86,7 +86,10 @@ impl Transform4F {
     #[inline]
     pub fn from_translation(mut translation: Vector4F) -> Transform4F {
         translation.set_w(1.0);
-        Transform4F { c3: translation.0, ..Transform4F::default() }
+        Transform4F {
+            c3: translation.0,
+            ..Transform4F::default()
+        }
     }
 
     // TODO(pcwalton): Optimize.
@@ -212,11 +215,24 @@ impl Transform4F {
 
         // TODO(pcwalton): Use SIMD. This needs a matrix transpose:
         // https://fgiesen.wordpress.com/2013/07/09/simd-transposes-1/
-        let transform = Transform4F::row_major(s.x(),       s.y(),       s.z(),       0.0,
-                                               u.x(),       u.y(),       u.z(),       0.0,
-                                               minus_f.x(), minus_f.y(), minus_f.z(), 0.0,
-                                               0.0,         0.0,         0.0,         1.0) *
-                        Transform4F::from_translation((-eye).to_4d());
+        let transform = Transform4F::row_major(
+            s.x(),
+            s.y(),
+            s.z(),
+            0.0,
+            u.x(),
+            u.y(),
+            u.z(),
+            0.0,
+            minus_f.x(),
+            minus_f.y(),
+            minus_f.z(),
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            1.0,
+        ) * Transform4F::from_translation((-eye).to_4d());
         transform
     }
 
@@ -415,7 +431,7 @@ impl Mul<RectF> for Perspective {
     type Output = RectF;
     #[inline]
     fn mul(self, rect: RectF) -> RectF {
-        let (upper_left, upper_right) = (self * rect.origin(),     self * rect.upper_right());
+        let (upper_left, upper_right) = (self * rect.origin(), self * rect.upper_right());
         let (lower_left, lower_right) = (self * rect.lower_left(), self * rect.lower_right());
         let min_point = upper_left.min(upper_right).min(lower_left).min(lower_right);
         let max_point = upper_left.max(upper_right).max(lower_left).max(lower_right);
@@ -425,8 +441,8 @@ impl Mul<RectF> for Perspective {
 
 #[cfg(test)]
 mod test {
-    use crate::vector::Vector4F;
     use crate::transform3d::Transform4F;
+    use crate::vector::Vector4F;
 
     #[test]
     fn test_post_mul() {

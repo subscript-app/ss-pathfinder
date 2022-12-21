@@ -14,8 +14,8 @@ use crate::util;
 use ss_pathfinder_color::ColorU;
 use ss_pathfinder_geometry::line_segment::LineSegment2F;
 use ss_pathfinder_geometry::transform2d::Transform2F;
-use ss_pathfinder_geometry::vector::Vector2F;
 use ss_pathfinder_geometry::util as geometry_util;
+use ss_pathfinder_geometry::vector::Vector2F;
 use ss_pathfinder_simd::default::F32x2;
 use std::cmp::Ordering;
 use std::convert;
@@ -67,7 +67,7 @@ pub enum GradientGeometry {
         /// Like `gradientTransform` in SVG. Note that this is the inverse of Cairo's gradient
         /// transform.
         transform: Transform2F,
-    }
+    },
 }
 
 /// What should be rendered outside the color stops.
@@ -83,13 +83,20 @@ pub enum GradientWrap {
 impl Eq for Gradient {}
 
 impl Hash for Gradient {
-    fn hash<H>(&self, state: &mut H) where H: Hasher {
+    fn hash<H>(&self, state: &mut H)
+    where
+        H: Hasher,
+    {
         match self.geometry {
             GradientGeometry::Linear(line) => {
                 (0).hash(state);
                 util::hash_line_segment(line, state);
             }
-            GradientGeometry::Radial { line, radii, transform } => {
+            GradientGeometry::Radial {
+                line,
+                radii,
+                transform,
+            } => {
                 (1).hash(state);
                 util::hash_line_segment(line, state);
                 util::hash_f32(radii.x(), state);
@@ -109,7 +116,10 @@ impl Hash for Gradient {
 impl Eq for ColorStop {}
 
 impl Hash for ColorStop {
-    fn hash<H>(&self, state: &mut H) where H: Hasher {
+    fn hash<H>(&self, state: &mut H)
+    where
+        H: Hasher,
+    {
         unsafe {
             self.color.hash(state);
             let offset = mem::transmute::<f32, u32>(self.offset);
@@ -145,10 +155,17 @@ impl Gradient {
     /// with two circles, pass a `LineSegment2F`. To start the gradient at the center of the
     /// circle, pass zero for the first radius.
     #[inline]
-    pub fn radial<L>(line: L, radii: F32x2) -> Gradient where L: RadialGradientLine {
+    pub fn radial<L>(line: L, radii: F32x2) -> Gradient
+    where
+        L: RadialGradientLine,
+    {
         let transform = Transform2F::default();
         Gradient {
-            geometry: GradientGeometry::Radial { line: line.to_line(), radii, transform },
+            geometry: GradientGeometry::Radial {
+                line: line.to_line(),
+                radii,
+                transform,
+            },
             stops: Vec::new(),
             wrap: GradientWrap::Clamp,
         }
@@ -157,9 +174,16 @@ impl Gradient {
     /// Adds a new color stop to the radial gradient.
     #[inline]
     pub fn add(&mut self, stop: ColorStop) {
-        let index = self.stops.binary_search_by(|other| {
-            if other.offset <= stop.offset { Ordering::Less } else { Ordering::Greater }
-        }).unwrap_or_else(convert::identity);
+        let index = self
+            .stops
+            .binary_search_by(|other| {
+                if other.offset <= stop.offset {
+                    Ordering::Less
+                } else {
+                    Ordering::Greater
+                }
+            })
+            .unwrap_or_else(convert::identity);
         self.stops.insert(index, stop);
     }
 
@@ -193,10 +217,22 @@ impl Gradient {
         t = geometry_util::clamp(t, 0.0, 1.0);
         let last_index = self.stops.len() - 1;
 
-        let upper_index = self.stops.binary_search_by(|stop| {
-            if stop.offset < t || stop.offset == 0.0 { Ordering::Less } else { Ordering::Greater }
-        }).unwrap_or_else(convert::identity).min(last_index);
-        let lower_index = if upper_index > 0 { upper_index - 1 } else { upper_index };
+        let upper_index = self
+            .stops
+            .binary_search_by(|stop| {
+                if stop.offset < t || stop.offset == 0.0 {
+                    Ordering::Less
+                } else {
+                    Ordering::Greater
+                }
+            })
+            .unwrap_or_else(convert::identity)
+            .min(last_index);
+        let lower_index = if upper_index > 0 {
+            upper_index - 1
+        } else {
+            upper_index
+        };
 
         let lower_stop = &self.stops[lower_index];
         let upper_stop = &self.stops[upper_index];
@@ -207,7 +243,11 @@ impl Gradient {
         }
 
         let ratio = ((t - lower_stop.offset) / denom).min(1.0);
-        lower_stop.color.to_f32().lerp(upper_stop.color.to_f32(), ratio).to_u8()
+        lower_stop
+            .color
+            .to_f32()
+            .lerp(upper_stop.color.to_f32(), ratio)
+            .to_u8()
     }
 
     /// Returns true if all colors of all stops in this gradient are opaque (alpha is 1.0).
@@ -220,7 +260,9 @@ impl Gradient {
     /// 0.0).
     #[inline]
     pub fn is_fully_transparent(&self) -> bool {
-        self.stops.iter().all(|stop| stop.color.is_fully_transparent())
+        self.stops
+            .iter()
+            .all(|stop| stop.color.is_fully_transparent())
     }
 
     /// Applies the given affine transform to this gradient.
@@ -234,9 +276,9 @@ impl Gradient {
 
         match self.geometry {
             GradientGeometry::Linear(ref mut line) => *line = new_transform * *line,
-            GradientGeometry::Radial { ref mut transform, .. } => {
-                *transform = new_transform * *transform
-            }
+            GradientGeometry::Radial {
+                ref mut transform, ..
+            } => *transform = new_transform * *transform,
         }
     }
 }
@@ -283,9 +325,10 @@ mod test {
         }
 
         // Check that it sorted stably
-        assert!(grad.stops.windows(2).all(|w| {
-            w[0].offset < w[1].offset || w[0].color.r < w[1].color.r
-        }));
+        assert!(grad
+            .stops
+            .windows(2)
+            .all(|w| { w[0].offset < w[1].offset || w[0].color.r < w[1].color.r }));
     }
 
     #[test]
@@ -293,7 +336,10 @@ mod test {
         let mut grad = Gradient::linear_from_points(Vector2F::default(), Vector2F::default());
         for i in 0..110 {
             let zero_width = (i == 0) || (11 <= i && i < 99) || (i == 109);
-            grad.add_color_stop(ColorU::new(if zero_width { 255 } else { 0 }, 0, 0, 1), (i % 11) as f32 / 10.0);
+            grad.add_color_stop(
+                ColorU::new(if zero_width { 255 } else { 0 }, 0, 0, 1),
+                (i % 11) as f32 / 10.0,
+            );
         }
 
         for i in 0..11 {

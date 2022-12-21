@@ -2,24 +2,21 @@
 mod data;
 mod renderers;
 
-pub use data::basics::{ViewResolution, StaticDrawCmd, DynDrawCmd};
-pub use renderers::scene::{VShape, VScene, ShapeType};
-pub use renderers::static_core::{Vectorizer, VectorizerRef, VectorizerMut};
+pub use data::basics::{DynDrawCmd, StaticDrawCmd, ViewResolution};
+pub use renderers::scene::{ShapeType, VScene, VShape};
+pub use renderers::static_core::{Vectorizer, VectorizerMut, VectorizerRef};
 
 //―――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――
 // REEXPORTS
 //―――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――
 
-
-pub use metal::{CAMetalLayer, CoreAnimationLayerRef, CoreAnimationLayer};
+pub use metal::{CAMetalLayer, CoreAnimationLayer, CoreAnimationLayerRef};
 pub use metal::{CoreAnimationDrawableRef, DeviceRef as NativeMetalDeviceRef};
 
 pub use ss_pathfinder_color::{ColorF, ColorU};
 
-pub use ss_pathfinder_canvas::{Path2D, CanvasRenderingContext2D, FillStyle};
+pub use ss_pathfinder_canvas::{CanvasRenderingContext2D, FillStyle, Path2D};
 
-pub use ss_pathfinder_geometry::vector::{vec2f, vec2i};
 pub use ss_pathfinder_geometry::rect::{RectF, RectI};
-pub use ss_pathfinder_geometry::vector::{Vector2I, Vector2F, Vector4F};
-
-
+pub use ss_pathfinder_geometry::vector::{vec2f, vec2i};
+pub use ss_pathfinder_geometry::vector::{Vector2F, Vector2I, Vector4F};

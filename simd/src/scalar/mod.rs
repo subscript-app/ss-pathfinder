@@ -10,7 +10,7 @@
 
 use std::f32;
 use std::fmt::{self, Debug, Formatter};
-use std::ops::{Add, BitAnd, BitOr, Div, Index, IndexMut, Mul, Shr, Sub, Not};
+use std::ops::{Add, BitAnd, BitOr, Div, Index, IndexMut, Mul, Not, Shr, Sub};
 
 mod swizzle_f32x4;
 mod swizzle_i32x4;
@@ -485,18 +485,12 @@ impl I32x2 {
 
     #[inline]
     pub fn min(self, other: I32x2) -> I32x2 {
-        I32x2([
-            self[0].min(other[0]),
-            self[1].min(other[1]),
-        ])
+        I32x2([self[0].min(other[0]), self[1].min(other[1])])
     }
 
     #[inline]
     pub fn max(self, other: I32x2) -> I32x2 {
-        I32x2([
-            self[0].max(other[0]),
-            self[1].max(other[1]),
-        ])
+        I32x2([self[0].max(other[0]), self[1].max(other[1])])
     }
 
     // Packed comparisons
@@ -531,7 +525,7 @@ impl I32x2 {
             if self[0] < other[0] { !0 } else { 0 },
             if self[1] < other[1] { !0 } else { 0 },
         ])
-    } 
+    }
 
     // Conversions
 
@@ -715,7 +709,12 @@ impl I32x4 {
     /// FIXME(pcwalton): Should they? This will assert on overflow in debug.
     #[inline]
     pub fn to_u32x4(self) -> U32x4 {
-        U32x4([self[0] as u32, self[1] as u32, self[2] as u32, self[3] as u32])
+        U32x4([
+            self[0] as u32,
+            self[1] as u32,
+            self[2] as u32,
+            self[3] as u32,
+        ])
     }
 }
 
@@ -777,7 +776,12 @@ impl BitAnd<I32x4> for I32x4 {
     type Output = I32x4;
     #[inline]
     fn bitand(self, other: I32x4) -> I32x4 {
-        I32x4([self[0] & other[0], self[1] & other[1], self[2] & other[2], self[3] & other[3]])
+        I32x4([
+            self[0] & other[0],
+            self[1] & other[1],
+            self[2] & other[2],
+            self[3] & other[3],
+        ])
     }
 }
 
@@ -785,7 +789,12 @@ impl BitOr<I32x4> for I32x4 {
     type Output = I32x4;
     #[inline]
     fn bitor(self, other: I32x4) -> I32x4 {
-        I32x4([self[0] | other[0], self[1] | other[1], self[2] | other[2], self[3] | other[3]])
+        I32x4([
+            self[0] | other[0],
+            self[1] | other[1],
+            self[2] | other[2],
+            self[3] | other[3],
+        ])
     }
 }
 
@@ -840,7 +849,6 @@ impl U32x2 {
     pub fn to_i32x2(self) -> I32x2 {
         I32x2::new(self[0] as i32, self[1] as i32)
     }
-
 }
 
 impl BitAnd<U32x2> for U32x2 {
@@ -894,7 +902,12 @@ impl U32x4 {
     /// FIXME(pcwalton): Should they? This will assert on overflow in debug.
     #[inline]
     pub fn to_i32x4(self) -> I32x4 {
-        I32x4([self[0] as i32, self[1] as i32, self[2] as i32, self[3] as i32])
+        I32x4([
+            self[0] as i32,
+            self[1] as i32,
+            self[2] as i32,
+            self[3] as i32,
+        ])
     }
 
     // Basic operations
@@ -930,6 +943,11 @@ impl Shr<u32> for U32x4 {
     type Output = U32x4;
     #[inline]
     fn shr(self, amount: u32) -> U32x4 {
-        U32x4([self[0] >> amount, self[1] >> amount, self[2] >> amount, self[3] >> amount])
+        U32x4([
+            self[0] >> amount,
+            self[1] >> amount,
+            self[2] >> amount,
+            self[3] >> amount,
+        ])
     }
 }

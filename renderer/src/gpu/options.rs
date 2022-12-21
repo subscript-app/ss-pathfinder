@@ -22,7 +22,10 @@ pub struct RendererMode {
 }
 
 /// Options that influence rendering that can be changed at runtime.
-pub struct RendererOptions<D> where D: Device {
+pub struct RendererOptions<D>
+where
+    D: Device,
+{
     /// Where the rendering should go: either to the default framebuffer (i.e. screen) or to a
     /// custom framebuffer.
     pub dest: DestFramebuffer<D>,
@@ -48,12 +51,20 @@ pub enum RendererLevel {
 impl RendererMode {
     /// Creates a new `RendererMode` with a suitable API level for the given GPU device.
     #[inline]
-    pub fn default_for_device<D>(device: &D) -> RendererMode where D: Device {
-        RendererMode { level: RendererLevel::default_for_device(device) }
+    pub fn default_for_device<D>(device: &D) -> RendererMode
+    where
+        D: Device,
+    {
+        RendererMode {
+            level: RendererLevel::default_for_device(device),
+        }
     }
 }
 
-impl<D> Default for RendererOptions<D> where D: Device {
+impl<D> Default for RendererOptions<D>
+where
+    D: Device,
+{
     #[inline]
     fn default() -> RendererOptions<D> {
         RendererOptions {
@@ -66,7 +77,10 @@ impl<D> Default for RendererOptions<D> where D: Device {
 
 impl RendererLevel {
     /// Returns a suitable renderer level for the given device.
-    pub fn default_for_device<D>(device: &D) -> RendererLevel where D: Device {
+    pub fn default_for_device<D>(device: &D) -> RendererLevel
+    where
+        D: Device,
+    {
         match device.feature_level() {
             FeatureLevel::D3D10 => RendererLevel::D3D9,
             FeatureLevel::D3D11 => RendererLevel::D3D11,
@@ -76,7 +90,10 @@ impl RendererLevel {
 
 /// Where the rendered content should go.
 #[derive(Clone)]
-pub enum DestFramebuffer<D> where D: Device {
+pub enum DestFramebuffer<D>
+where
+    D: Device,
+{
     /// The rendered content should go to the default framebuffer (e.g. the window in OpenGL).
     Default {
         /// The rectangle within the window to draw in, in device pixels.
@@ -88,22 +105,34 @@ pub enum DestFramebuffer<D> where D: Device {
     Other(D::Framebuffer),
 }
 
-impl<D> Default for DestFramebuffer<D> where D: Device {
+impl<D> Default for DestFramebuffer<D>
+where
+    D: Device,
+{
     #[inline]
     fn default() -> DestFramebuffer<D> {
-        DestFramebuffer::Default { viewport: RectI::default(), window_size: Vector2I::default() }
+        DestFramebuffer::Default {
+            viewport: RectI::default(),
+            window_size: Vector2I::default(),
+        }
     }
 }
 
-impl<D> DestFramebuffer<D> where D: Device {
+impl<D> DestFramebuffer<D>
+where
+    D: Device,
+{
     /// Returns a `DestFramebuffer` object that renders to the entire contents of the default
     /// framebuffer.
-    /// 
+    ///
     /// The `window_size` parameter specifies the size of the window in device pixels.
     #[inline]
     pub fn full_window(window_size: Vector2I) -> DestFramebuffer<D> {
         let viewport = RectI::new(Vector2I::default(), window_size);
-        DestFramebuffer::Default { viewport, window_size }
+        DestFramebuffer::Default {
+            viewport,
+            window_size,
+        }
     }
 
     /// Returns the size of the destination buffer, in device pixels.

@@ -24,7 +24,7 @@ use ss_pathfinder_content::outline::Outline;
 use ss_pathfinder_content::render_target::RenderTargetId;
 use ss_pathfinder_geometry::rect::RectF;
 use ss_pathfinder_geometry::transform2d::Transform2F;
-use ss_pathfinder_geometry::vector::{Vector2I, vec2f};
+use ss_pathfinder_geometry::vector::{vec2f, Vector2I};
 use ss_pathfinder_gpu::Device;
 use std::mem;
 use std::ops::Range;
@@ -88,7 +88,9 @@ impl Scene {
         let end_path_id = DrawPathId(draw_path_id.0 + 1);
         match self.display_list.last_mut() {
             Some(DisplayItem::DrawPaths(ref mut range)) => range.end = end_path_id,
-            _ => self.display_list.push(DisplayItem::DrawPaths(draw_path_id..end_path_id)),
+            _ => self
+                .display_list
+                .push(DisplayItem::DrawPaths(draw_path_id..end_path_id)),
         }
 
         self.epoch.next();
@@ -109,7 +111,8 @@ impl Scene {
     /// top of the stack.
     pub fn push_render_target(&mut self, render_target: RenderTarget) -> RenderTargetId {
         let render_target_id = self.palette.push_render_target(render_target);
-        self.display_list.push(DisplayItem::PushRenderTarget(render_target_id));
+        self.display_list
+            .push(DisplayItem::PushRenderTarget(render_target_id));
         self.epoch.next();
         render_target_id
     }
@@ -159,7 +162,8 @@ impl Scene {
             match display_item {
                 DisplayItem::PushRenderTarget(old_render_target_id) => {
                     let new_render_target_id = render_target_mapping[&old_render_target_id];
-                    self.display_list.push(DisplayItem::PushRenderTarget(new_render_target_id));
+                    self.display_list
+                        .push(DisplayItem::PushRenderTarget(new_render_target_id));
                 }
                 DisplayItem::PopRenderTarget => {
                     self.display_list.push(DisplayItem::PopRenderTarget);
@@ -178,11 +182,13 @@ impl Scene {
     }
 
     #[inline]
-    pub(crate) fn build_paint_info(&mut self,
-                                   texture_manager: &mut PaintTextureManager,
-                                   render_transform: Transform2F)
-                                   -> PaintInfo {
-        self.palette.build_paint_info(texture_manager, render_transform)
+    pub(crate) fn build_paint_info(
+        &mut self,
+        texture_manager: &mut PaintTextureManager,
+        render_transform: Transform2F,
+    ) -> PaintInfo {
+        self.palette
+            .build_paint_info(texture_manager, render_transform)
     }
 
     /// Defines a new paint, which specifies how paths are to be filled or stroked. Returns a paint
@@ -225,10 +231,11 @@ impl Scene {
     }
 
     #[allow(deprecated)]
-    pub(crate) fn apply_render_options(&self,
-                                       original_outline: &Outline,
-                                       options: &PreparedBuildOptions)
-                                       -> Outline {
+    pub(crate) fn apply_render_options(
+        &self,
+        original_outline: &Outline,
+        options: &PreparedBuildOptions,
+    ) -> Outline {
         let mut outline;
         match options.transform {
             PreparedRenderTransform::Perspective {
@@ -287,11 +294,14 @@ impl Scene {
     /// `SequentialExecutor` to prepare commands on a single thread or `RayonExecutor` to prepare
     /// commands in parallel across multiple threads.
     #[inline]
-    pub fn build<'a, 'b, E>(&mut self,
-                            options: BuildOptions,
-                            sink: &'b mut SceneSink<'a>,
-                            executor: &E)
-                            where E: Executor {
+    pub fn build<'a, 'b, E>(
+        &mut self,
+        options: BuildOptions,
+        sink: &'b mut SceneSink<'a>,
+        executor: &E,
+    ) where
+        E: Executor,
+    {
         let prepared_options = options.prepare(self.bounds);
         SceneBuilder::new(self, &prepared_options, sink).build(executor)
     }
@@ -332,7 +342,10 @@ impl Scene {
     /// Returns the paint with the given ID.
     #[inline]
     pub fn get_paint(&self, paint_id: PaintId) -> &Paint {
-        self.palette.paints.get(paint_id.0 as usize).expect("No paint with that ID!")
+        self.palette
+            .paints
+            .get(paint_id.0 as usize)
+            .expect("No paint with that ID!")
     }
 
     /// Returns the globally-unique ID of the scene.
@@ -347,12 +360,16 @@ impl Scene {
     }
 
     /// A convenience method to build a scene and accumulate commands into a vector.
-    pub fn build_into_vector<D, E>(&mut self,
-                                   renderer: &mut Renderer<D>,
-                                   build_options: BuildOptions,
-                                   executor: E)
-                                   -> Vec<RenderCommand>
-                                   where D: Device, E: Executor {
+    pub fn build_into_vector<D, E>(
+        &mut self,
+        renderer: &mut Renderer<D>,
+        build_options: BuildOptions,
+        executor: E,
+    ) -> Vec<RenderCommand>
+    where
+        D: Device,
+        E: Executor,
+    {
         let commands = Arc::new(Mutex::new(vec![]));
         let commands_for_listener = commands.clone();
         let listener = RenderCommandListener::new(Box::new(move |command| {
@@ -366,14 +383,20 @@ impl Scene {
 
     /// A convenience method to build a scene and send the resulting commands to the given
     /// renderer.
-    pub fn build_and_render<D, E>(&mut self,
-                                  renderer: &mut Renderer<D>,
-                                  build_options: BuildOptions,
-                                  executor: E)
-                                  where D: Device, E: Executor {
+    pub fn build_and_render<D, E>(
+        &mut self,
+        renderer: &mut Renderer<D>,
+        build_options: BuildOptions,
+        executor: E,
+    ) where
+        D: Device,
+        E: Executor,
+    {
         let commands = self.build_into_vector(renderer, build_options, executor);
         renderer.begin_scene();
-        commands.into_iter().for_each(|command| renderer.render_command(&command));
+        commands
+            .into_iter()
+            .for_each(|command| renderer.render_command(&command));
         renderer.end_scene();
     }
 }
@@ -410,9 +433,15 @@ impl SceneEpoch {
     #[inline]
     fn successor(&self) -> SceneEpoch {
         if self.lo == u64::MAX {
-            SceneEpoch { hi: self.hi + 1, lo: 0 }
+            SceneEpoch {
+                hi: self.hi + 1,
+                lo: 0,
+            }
         } else {
-            SceneEpoch { hi: self.hi, lo: self.lo + 1 }
+            SceneEpoch {
+                hi: self.hi,
+                lo: self.lo + 1,
+            }
         }
     }
 
@@ -425,8 +454,10 @@ impl SceneEpoch {
 impl<'a> SceneSink<'a> {
     /// Creates a new scene sink from the given render command listener and level.
     #[inline]
-    pub fn new(listener: RenderCommandListener<'a>, renderer_level: RendererLevel)
-               -> SceneSink<'a> {
+    pub fn new(
+        listener: RenderCommandListener<'a>,
+        renderer_level: RendererLevel,
+    ) -> SceneSink<'a> {
         SceneSink {
             listener,
             renderer_level,
@@ -587,7 +618,12 @@ impl ClipPath {
     /// has no name.
     #[inline]
     pub fn new(outline: Outline) -> ClipPath {
-        ClipPath { outline, clip_path: None, fill_rule: FillRule::Winding, name: String::new() }
+        ClipPath {
+            outline,
+            clip_path: None,
+            fill_rule: FillRule::Winding,
+            name: String::new(),
+        }
     }
 
     /// Returns the outline of this clip path, which defines its vector commands.

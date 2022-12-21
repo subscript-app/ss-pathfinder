@@ -18,11 +18,11 @@
 use crate::gpu::options::RendererLevel;
 use crate::gpu::perf::{RenderStats, RenderTime};
 use ss_pathfinder_geometry::rect::RectI;
-use ss_pathfinder_geometry::vector::{Vector2I, vec2i};
-use ss_pathfinder_gpu::Device;
+use ss_pathfinder_geometry::vector::{vec2i, Vector2I};
 use ss_pathfinder_gpu::allocator::GPUMemoryAllocator;
+use ss_pathfinder_gpu::Device;
 use ss_pathfinder_resources::ResourceLoader;
-use ss_pathfinder_ui::{FONT_ASCENT, LINE_HEIGHT, PADDING, UIPresenter, WINDOW_COLOR};
+use ss_pathfinder_ui::{UIPresenter, FONT_ASCENT, LINE_HEIGHT, PADDING, WINDOW_COLOR};
 use std::collections::VecDeque;
 use std::ops::{Add, Div};
 use std::time::Duration;
@@ -40,9 +40,12 @@ const INFO_WINDOW_WIDTH: i32 = 425;
 const INFO_WINDOW_HEIGHT: i32 = LINE_HEIGHT * 2 + PADDING + 2;
 
 /// Manages the debug UI.
-pub struct DebugUIPresenter<D> where D: Device {
+pub struct DebugUIPresenter<D>
+where
+    D: Device,
+{
     /// The general UI presenter object.
-    /// 
+    ///
     /// You can use this to draw your own application-specific debug widgets.
     pub ui_presenter: UIPresenter<D>,
 
@@ -53,12 +56,16 @@ pub struct DebugUIPresenter<D> where D: Device {
     renderer_level: RendererLevel,
 }
 
-impl<D> DebugUIPresenter<D> where D: Device {
-    pub(crate) fn new(device: &D,
-                      resources: &dyn ResourceLoader,
-                      framebuffer_size: Vector2I,
-                      renderer_level: RendererLevel)
-                      -> DebugUIPresenter<D> {
+impl<D> DebugUIPresenter<D>
+where
+    D: Device,
+{
+    pub(crate) fn new(
+        device: &D,
+        resources: &dyn ResourceLoader,
+        framebuffer_size: Vector2I,
+        renderer_level: RendererLevel,
+    ) -> DebugUIPresenter<D> {
         let ui_presenter = UIPresenter::new(device, resources, framebuffer_size);
         DebugUIPresenter {
             ui_presenter,
@@ -90,29 +97,35 @@ impl<D> DebugUIPresenter<D> where D: Device {
         let framebuffer_size = self.ui_presenter.framebuffer_size();
         let bottom = framebuffer_size.y() - PADDING;
         let window_rect = RectI::new(
-            vec2i(framebuffer_size.x() - PADDING - INFO_WINDOW_WIDTH,
-                  bottom - INFO_WINDOW_HEIGHT),
+            vec2i(
+                framebuffer_size.x() - PADDING - INFO_WINDOW_WIDTH,
+                bottom - INFO_WINDOW_HEIGHT,
+            ),
             vec2i(INFO_WINDOW_WIDTH, INFO_WINDOW_HEIGHT),
         );
 
-        self.ui_presenter.draw_solid_rounded_rect(device, allocator, window_rect, WINDOW_COLOR);
+        self.ui_presenter
+            .draw_solid_rounded_rect(device, allocator, window_rect, WINDOW_COLOR);
 
         let origin = window_rect.origin() + vec2i(PADDING, PADDING + FONT_ASCENT);
         let level = match self.renderer_level {
             RendererLevel::D3D9 => "D3D9",
             RendererLevel::D3D11 => "D3D11",
         };
-        self.ui_presenter.draw_text(device,
-                                    allocator,
-                                    &format!("{} ({} level)", self.backend_name, level),
-                                    origin + vec2i(0, LINE_HEIGHT * 0),
-                                    false);
-        self.ui_presenter.draw_text(device,
-                                    allocator,
-                                    &self.device_name,
-                                    origin + vec2i(0, LINE_HEIGHT * 1),
-                                    false);
-
+        self.ui_presenter.draw_text(
+            device,
+            allocator,
+            &format!("{} ({} level)", self.backend_name, level),
+            origin + vec2i(0, LINE_HEIGHT * 0),
+            false,
+        );
+        self.ui_presenter.draw_text(
+            device,
+            allocator,
+            &self.device_name,
+            origin + vec2i(0, LINE_HEIGHT * 1),
+            false,
+        );
     }
 
     fn performance_window_size(&self) -> Vector2I {
@@ -130,16 +143,20 @@ impl<D> DebugUIPresenter<D> where D: Device {
         let framebuffer_size = self.ui_presenter.framebuffer_size();
         let bottom = framebuffer_size.y() - PADDING;
         let window_rect = RectI::new(
-            vec2i(framebuffer_size.x() - PADDING - STATS_WINDOW_WIDTH,
-                  bottom -
-                    PADDING -
-                    INFO_WINDOW_HEIGHT -
-                    performance_window_height -
-                    PADDING -
-                    STATS_WINDOW_HEIGHT),
-            vec2i(STATS_WINDOW_WIDTH, STATS_WINDOW_HEIGHT));
+            vec2i(
+                framebuffer_size.x() - PADDING - STATS_WINDOW_WIDTH,
+                bottom
+                    - PADDING
+                    - INFO_WINDOW_HEIGHT
+                    - performance_window_height
+                    - PADDING
+                    - STATS_WINDOW_HEIGHT,
+            ),
+            vec2i(STATS_WINDOW_WIDTH, STATS_WINDOW_HEIGHT),
+        );
 
-        self.ui_presenter.draw_solid_rounded_rect(device, allocator, window_rect, WINDOW_COLOR);
+        self.ui_presenter
+            .draw_solid_rounded_rect(device, allocator, window_rect, WINDOW_COLOR);
 
         let mean_cpu_sample = self.cpu_samples.mean();
         let origin = window_rect.origin() + vec2i(PADDING, PADDING + FONT_ASCENT);
@@ -179,11 +196,15 @@ impl<D> DebugUIPresenter<D> where D: Device {
         let framebuffer_size = self.ui_presenter.framebuffer_size();
         let bottom = framebuffer_size.y() - PADDING;
         let window_rect = RectI::new(
-            vec2i(framebuffer_size.x() - PADDING - performance_window_size.x(),
-                  bottom - INFO_WINDOW_HEIGHT - PADDING - performance_window_size.y()),
-            performance_window_size);
+            vec2i(
+                framebuffer_size.x() - PADDING - performance_window_size.x(),
+                bottom - INFO_WINDOW_HEIGHT - PADDING - performance_window_size.y(),
+            ),
+            performance_window_size,
+        );
 
-        self.ui_presenter.draw_solid_rounded_rect(device, allocator, window_rect, WINDOW_COLOR);
+        self.ui_presenter
+            .draw_solid_rounded_rect(device, allocator, window_rect, WINDOW_COLOR);
 
         let mean_cpu_sample = self.cpu_samples.mean();
         let mean_gpu_sample = self.gpu_samples.mean();
@@ -201,8 +222,10 @@ impl<D> DebugUIPresenter<D> where D: Device {
         self.ui_presenter.draw_text(
             device,
             allocator,
-            &format!("VRAM Alloc.: {:.1} MB",
-                     mean_cpu_sample.gpu_bytes_allocated as f64 / (1024.0 * 1024.0)),
+            &format!(
+                "VRAM Alloc.: {:.1} MB",
+                mean_cpu_sample.gpu_bytes_allocated as f64 / (1024.0 * 1024.0)
+            ),
             origin + vec2i(0, current_y),
             false,
         );
@@ -210,8 +233,10 @@ impl<D> DebugUIPresenter<D> where D: Device {
         self.ui_presenter.draw_text(
             device,
             allocator,
-            &format!("VRAM Commit: {:.1} MB",
-                     mean_cpu_sample.gpu_bytes_committed as f64 / (1024.0 * 1024.0)),
+            &format!(
+                "VRAM Commit: {:.1} MB",
+                mean_cpu_sample.gpu_bytes_committed as f64 / (1024.0 * 1024.0)
+            ),
             origin + vec2i(0, current_y),
             false,
         );
@@ -220,7 +245,10 @@ impl<D> DebugUIPresenter<D> where D: Device {
         self.ui_presenter.draw_text(
             device,
             allocator,
-            &format!("CPU: {:.3} ms", duration_to_ms(mean_cpu_sample.cpu_build_time)),
+            &format!(
+                "CPU: {:.3} ms",
+                duration_to_ms(mean_cpu_sample.cpu_build_time)
+            ),
             origin + vec2i(0, current_y),
             false,
         );
@@ -231,7 +259,10 @@ impl<D> DebugUIPresenter<D> where D: Device {
                 self.ui_presenter.draw_text(
                     device,
                     allocator,
-                    &format!("GPU Dice: {:.3} ms", duration_to_ms(mean_gpu_sample.dice_time)),
+                    &format!(
+                        "GPU Dice: {:.3} ms",
+                        duration_to_ms(mean_gpu_sample.dice_time)
+                    ),
                     origin + vec2i(0, current_y),
                     false,
                 );
@@ -239,7 +270,10 @@ impl<D> DebugUIPresenter<D> where D: Device {
                 self.ui_presenter.draw_text(
                     device,
                     allocator,
-                    &format!("GPU Bin: {:.3} ms", duration_to_ms(mean_gpu_sample.bin_time)),
+                    &format!(
+                        "GPU Bin: {:.3} ms",
+                        duration_to_ms(mean_gpu_sample.bin_time)
+                    ),
                     origin + vec2i(0, current_y),
                     false,
                 );
@@ -250,7 +284,10 @@ impl<D> DebugUIPresenter<D> where D: Device {
         self.ui_presenter.draw_text(
             device,
             allocator,
-            &format!("GPU Fill: {:.3} ms", duration_to_ms(mean_gpu_sample.fill_time)),
+            &format!(
+                "GPU Fill: {:.3} ms",
+                duration_to_ms(mean_gpu_sample.fill_time)
+            ),
             origin + vec2i(0, current_y),
             false,
         );
@@ -258,7 +295,10 @@ impl<D> DebugUIPresenter<D> where D: Device {
         self.ui_presenter.draw_text(
             device,
             allocator,
-            &format!("GPU Comp.: {:.3} ms", duration_to_ms(mean_gpu_sample.composite_time)),
+            &format!(
+                "GPU Comp.: {:.3} ms",
+                duration_to_ms(mean_gpu_sample.composite_time)
+            ),
             origin + vec2i(0, current_y),
             false,
         );
@@ -266,7 +306,10 @@ impl<D> DebugUIPresenter<D> where D: Device {
         self.ui_presenter.draw_text(
             device,
             allocator,
-            &format!("GPU Other: {:.3} ms", duration_to_ms(mean_gpu_sample.other_time)),
+            &format!(
+                "GPU Other: {:.3} ms",
+                duration_to_ms(mean_gpu_sample.other_time)
+            ),
             origin + vec2i(0, current_y),
             false,
         );
@@ -274,18 +317,18 @@ impl<D> DebugUIPresenter<D> where D: Device {
 
         let mut wallclock_time = match self.renderer_level {
             RendererLevel::D3D11 => {
-                duration_to_ms(mean_cpu_sample.cpu_build_time) +
-                    duration_to_ms(mean_gpu_sample.fill_time)
+                duration_to_ms(mean_cpu_sample.cpu_build_time)
+                    + duration_to_ms(mean_gpu_sample.fill_time)
             }
-            RendererLevel::D3D9 => {
-                f64::max(duration_to_ms(mean_cpu_sample.cpu_build_time),
-                         duration_to_ms(mean_gpu_sample.fill_time))
-            }
+            RendererLevel::D3D9 => f64::max(
+                duration_to_ms(mean_cpu_sample.cpu_build_time),
+                duration_to_ms(mean_gpu_sample.fill_time),
+            ),
         };
-        wallclock_time += duration_to_ms(mean_gpu_sample.composite_time) +
-                          duration_to_ms(mean_gpu_sample.dice_time) +
-                          duration_to_ms(mean_gpu_sample.bin_time) +
-                          duration_to_ms(mean_gpu_sample.other_time);
+        wallclock_time += duration_to_ms(mean_gpu_sample.composite_time)
+            + duration_to_ms(mean_gpu_sample.dice_time)
+            + duration_to_ms(mean_gpu_sample.bin_time)
+            + duration_to_ms(mean_gpu_sample.other_time);
         self.ui_presenter.draw_text(
             device,
             allocator,
@@ -294,7 +337,6 @@ impl<D> DebugUIPresenter<D> where D: Device {
             false,
         );
     }
-
 }
 
 struct SampleBuffer<S>

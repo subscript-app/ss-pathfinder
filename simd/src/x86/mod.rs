@@ -14,13 +14,13 @@ use std::mem;
 use std::ops::{Add, BitAnd, BitOr, BitXor, Div, Index, IndexMut, Mul, Not, Shr, Sub};
 
 #[cfg(target_pointer_width = "32")]
-use std::arch::x86::{__m128, __m128i};
-#[cfg(target_pointer_width = "32")]
 use std::arch::x86;
-#[cfg(target_pointer_width = "64")]
-use std::arch::x86_64::{__m128, __m128i};
+#[cfg(target_pointer_width = "32")]
+use std::arch::x86::{__m128, __m128i};
 #[cfg(target_pointer_width = "64")]
 use std::arch::x86_64 as x86;
+#[cfg(target_pointer_width = "64")]
+use std::arch::x86_64::{__m128, __m128i};
 
 mod swizzle_f32x4;
 mod swizzle_i32x4;
@@ -285,20 +285,12 @@ impl F32x4 {
 
     #[inline]
     pub fn packed_eq(self, other: F32x4) -> U32x4 {
-        unsafe {
-            U32x4(x86::_mm_castps_si128(x86::_mm_cmpeq_ps(
-                self.0, other.0,
-            )))
-        }
+        unsafe { U32x4(x86::_mm_castps_si128(x86::_mm_cmpeq_ps(self.0, other.0))) }
     }
 
     #[inline]
     pub fn packed_gt(self, other: F32x4) -> U32x4 {
-        unsafe {
-            U32x4(x86::_mm_castps_si128(x86::_mm_cmpgt_ps(
-                self.0, other.0,
-            )))
-        }
+        unsafe { U32x4(x86::_mm_castps_si128(x86::_mm_cmpgt_ps(self.0, other.0))) }
     }
 
     #[inline]

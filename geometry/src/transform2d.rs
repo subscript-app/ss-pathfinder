@@ -14,7 +14,7 @@ use crate::line_segment::LineSegment2F;
 use crate::rect::RectF;
 use crate::transform3d::Transform4F;
 use crate::unit_vector::UnitVector;
-use crate::vector::{IntoVector2F, Vector2F, vec2f};
+use crate::vector::{vec2f, IntoVector2F, Vector2F};
 use ss_pathfinder_simd::default::F32x4;
 use std::ops::{Mul, MulAssign, Sub};
 
@@ -31,7 +31,10 @@ impl Default for Matrix2x2F {
 
 impl Matrix2x2F {
     #[inline]
-    pub fn from_scale<S>(scale: S) -> Matrix2x2F where S: IntoVector2F {
+    pub fn from_scale<S>(scale: S) -> Matrix2x2F
+    where
+        S: IntoVector2F,
+    {
         let scale = scale.into_vector_2f();
         Matrix2x2F(F32x4::new(scale.x(), 0.0, 0.0, scale.y()))
     }
@@ -145,7 +148,10 @@ impl Default for Transform2F {
 
 impl Transform2F {
     #[inline]
-    pub fn from_scale<S>(scale: S) -> Transform2F where S: IntoVector2F {
+    pub fn from_scale<S>(scale: S) -> Transform2F
+    where
+        S: IntoVector2F,
+    {
         let scale = scale.into_vector_2f();
         Transform2F {
             matrix: Matrix2x2F::from_scale(scale),
@@ -171,12 +177,21 @@ impl Transform2F {
 
     #[inline]
     pub fn from_translation(vector: Vector2F) -> Transform2F {
-        Transform2F { matrix: Matrix2x2F::default(), vector }
+        Transform2F {
+            matrix: Matrix2x2F::default(),
+            vector,
+        }
     }
 
     #[inline]
-    pub fn from_scale_rotation_translation<S>(scale: S, theta: f32, translation: Vector2F)
-                                              -> Transform2F where S: IntoVector2F {
+    pub fn from_scale_rotation_translation<S>(
+        scale: S,
+        theta: f32,
+        translation: Vector2F,
+    ) -> Transform2F
+    where
+        S: IntoVector2F,
+    {
         let scale = scale.into_vector_2f();
         let rotation = Transform2F::from_rotation(theta);
         let translation = Transform2F::from_translation(translation);
@@ -261,7 +276,10 @@ impl Transform2F {
     }
 
     #[inline]
-    pub fn scale<S>(&self, scale: S) -> Transform2F where S: IntoVector2F {
+    pub fn scale<S>(&self, scale: S) -> Transform2F
+    where
+        S: IntoVector2F,
+    {
         let scale = scale.into_vector_2f();
         Transform2F::from_scale(scale) * *self
     }
@@ -294,7 +312,10 @@ impl Transform2F {
     pub fn inverse(&self) -> Transform2F {
         let matrix_inv = self.matrix.inverse();
         let vector_inv = -(matrix_inv * self.vector);
-        Transform2F { matrix: matrix_inv, vector: vector_inv }
+        Transform2F {
+            matrix: matrix_inv,
+            vector: vector_inv,
+        }
     }
 }
 
@@ -329,7 +350,7 @@ impl Mul<RectF> for Transform2F {
     type Output = RectF;
     #[inline]
     fn mul(self, rect: RectF) -> RectF {
-        let (upper_left, upper_right) = (self * rect.origin(),     self * rect.upper_right());
+        let (upper_left, upper_right) = (self * rect.origin(), self * rect.upper_right());
         let (lower_left, lower_right) = (self * rect.lower_left(), self * rect.lower_right());
         let min_point = upper_left.min(upper_right).min(lower_left).min(lower_right);
         let max_point = upper_left.max(upper_right).max(lower_left).max(lower_right);

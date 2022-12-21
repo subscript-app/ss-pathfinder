@@ -17,10 +17,10 @@ use crate::segment::{Segment, SegmentFlags, SegmentKind};
 use crate::util::safe_sqrt;
 use ss_pathfinder_geometry::line_segment::LineSegment2F;
 use ss_pathfinder_geometry::rect::RectF;
-use ss_pathfinder_geometry::transform2d::{Transform2F, Matrix2x2F};
+use ss_pathfinder_geometry::transform2d::{Matrix2x2F, Transform2F};
 use ss_pathfinder_geometry::transform3d::Perspective;
 use ss_pathfinder_geometry::unit_vector::UnitVector;
-use ss_pathfinder_geometry::vector::{Vector2F, vec2f};
+use ss_pathfinder_geometry::vector::{vec2f, Vector2F};
 use std::f32::consts::PI;
 use std::fmt::{self, Debug, Formatter};
 use std::mem;
@@ -90,7 +90,10 @@ impl Outline {
 
     /// Creates a new outline from a list of segments.
     #[inline]
-    pub fn from_segments<I>(segments: I) -> Outline where I: Iterator<Item = Segment> {
+    pub fn from_segments<I>(segments: I) -> Outline
+    where
+        I: Iterator<Item = Segment>,
+    {
         let mut outline = Outline::new();
         let mut current_contour = Contour::new();
 
@@ -380,7 +383,7 @@ impl Contour {
             contour.push_cubic(
                 vec2f(p0.x(), p1.y()),
                 vec2f(p1.x(), p0.y()),
-                vec2f(p2.x(), p0.y())
+                vec2f(p2.x(), p0.y()),
             );
         }
 
@@ -393,7 +396,7 @@ impl Contour {
             contour.push_cubic(
                 vec2f(p1.x(), p0.y()),
                 vec2f(p0.x(), p1.y()),
-                vec2f(p0.x(), p2.y())
+                vec2f(p0.x(), p2.y()),
             );
         }
 
@@ -406,7 +409,7 @@ impl Contour {
             contour.push_cubic(
                 vec2f(p0.x(), p1.y()),
                 vec2f(p1.x(), p0.y()),
-                vec2f(p2.x(), p0.y())
+                vec2f(p2.x(), p0.y()),
             );
         }
 
@@ -419,7 +422,7 @@ impl Contour {
             contour.push_cubic(
                 vec2f(p1.x(), p0.y()),
                 vec2f(p0.x(), p1.y()),
-                vec2f(p0.x(), p2.y())
+                vec2f(p0.x(), p2.y()),
             );
         }
 
@@ -557,10 +560,7 @@ impl Contour {
     }
 
     #[inline]
-    pub(crate) fn push_point(&mut self,
-                             point: Vector2F,
-                             flags: PointFlags,
-                             update_bounds: bool) {
+    pub(crate) fn push_point(&mut self, point: Vector2F, flags: PointFlags, update_bounds: bool) {
         debug_assert!(!point.x().is_nan() && !point.y().is_nan());
 
         if update_bounds {
@@ -612,26 +612,30 @@ impl Contour {
     ///
     /// * `direction`: Whether the arc should be drawn clockwise or counterclockwise from the +x
     ///   axis.
-    pub fn push_arc(&mut self,
-                    transform: &Transform2F,
-                    start_angle: f32,
-                    end_angle: f32,
-                    direction: ArcDirection) {
+    pub fn push_arc(
+        &mut self,
+        transform: &Transform2F,
+        start_angle: f32,
+        end_angle: f32,
+        direction: ArcDirection,
+    ) {
         if end_angle - start_angle >= PI * 2.0 {
             self.push_ellipse(transform);
         } else {
             let start = vec2f(start_angle.cos(), start_angle.sin());
-            let end   = vec2f(end_angle.cos(),   end_angle.sin());
+            let end = vec2f(end_angle.cos(), end_angle.sin());
             self.push_arc_from_unit_chord(transform, LineSegment2F::new(start, end), direction);
         }
     }
 
     /// Given the endpoints of a unit arc, adds Bézier curves to approximate that arc to the
     /// current contour. The given transform is applied to the resulting arc.
-    pub fn push_arc_from_unit_chord(&mut self,
-                                    transform: &Transform2F,
-                                    mut chord: LineSegment2F,
-                                    direction: ArcDirection) {
+    pub fn push_arc_from_unit_chord(
+        &mut self,
+        transform: &Transform2F,
+        mut chord: LineSegment2F,
+        direction: ArcDirection,
+    ) {
         let mut direction_transform = Transform2F::default();
         if direction == ArcDirection::CCW {
             chord *= vec2f(1.0, -1.0);
@@ -640,15 +644,17 @@ impl Contour {
 
         let (mut vector, end_vector) = (UnitVector(chord.from()), UnitVector(chord.to()));
         for segment_index in 0..4 {
-            debug!("push_arc_from_unit_chord(): loop segment index {}", segment_index);
+            debug!(
+                "push_arc_from_unit_chord(): loop segment index {}",
+                segment_index
+            );
 
             let mut sweep_vector = end_vector.rev_rotate_by(vector);
             let last = sweep_vector.0.x() >= -EPSILON && sweep_vector.0.y() >= -EPSILON;
-            debug!("... end_vector={:?} vector={:?} sweep_vector={:?} last={:?}",
-                   end_vector,
-                   vector,
-                   sweep_vector,
-                   last);
+            debug!(
+                "... end_vector={:?} vector={:?} sweep_vector={:?} last={:?}",
+                end_vector, vector, sweep_vector, last
+            );
 
             let mut segment;
             if !last {
@@ -683,12 +689,14 @@ impl Contour {
     /// Draws an ellipse section with radii given by `radius` rotated by `x_axis_rotation` in
     /// radians to `to` in the given direction. If `large_arc` is true, draws an arc bigger than
     /// π radians, otherwise smaller than π radians.
-    pub fn push_svg_arc(&mut self,
-                        radius: Vector2F,
-                        x_axis_rotation: f32,
-                        large_arc: bool,
-                        direction: ArcDirection,
-                        to: Vector2F) {
+    pub fn push_svg_arc(
+        &mut self,
+        radius: Vector2F,
+        x_axis_rotation: f32,
+        large_arc: bool,
+        direction: ArcDirection,
+        to: Vector2F,
+    ) {
         let r = radius;
         let p = to;
         let last = self.last_position().unwrap_or_default();
@@ -698,7 +706,7 @@ impl Contour {
             let r_inv = r.recip();
             let sign = match (large_arc, direction) {
                 (false, ArcDirection::CW) | (true, ArcDirection::CCW) => 1.0,
-                (false, ArcDirection::CCW) | (true, ArcDirection::CW) => -1.0
+                (false, ArcDirection::CCW) | (true, ArcDirection::CW) => -1.0,
             };
             let rot = Matrix2x2F::from_rotation(x_axis_rotation);
             // x'
@@ -716,10 +724,14 @@ impl Contour {
 
                 let rq2 = r2 * q2.yx(); // (r_x^2 q_y^2, r_y^2 q_x^2)
                 let rq2_sum = rq2.x() + rq2.y(); // r_x^2 q_y^2 + r_y^2 q_x^2
-                // c'
-                let s = vec2f(1., -1.) * r * (q * r_inv).yx() * safe_sqrt((r2_prod - rq2_sum) / rq2_sum) * sign;
+                                                 // c'
+                let s = vec2f(1., -1.)
+                    * r
+                    * (q * r_inv).yx()
+                    * safe_sqrt((r2_prod - rq2_sum) / rq2_sum)
+                    * sign;
                 let c = rot * s + (last + p) * 0.5;
-                
+
                 let a = (q - s) * r_inv;
                 let b = -(q + s) * r_inv;
                 (a, b, c)
@@ -729,10 +741,10 @@ impl Contour {
                 let b = -a;
                 (a, b, c)
             };
-            
+
             let transform = Transform2F {
                 matrix: rot,
-                vector: c
+                vector: c,
             } * Transform2F::from_scale(r);
             let chord = LineSegment2F::new(a, b);
             self.push_arc_from_unit_chord(&transform, chord, direction);
@@ -747,17 +759,25 @@ impl Contour {
     pub fn push_ellipse(&mut self, transform: &Transform2F) {
         let segment = Segment::quarter_circle_arc();
         let mut rotation;
-        self.push_segment(&segment.transform(transform),
-                          PushSegmentFlags::UPDATE_BOUNDS | PushSegmentFlags::INCLUDE_FROM_POINT);
-        rotation = Transform2F::from_rotation_vector(UnitVector(vec2f( 0.0,  1.0)));
-        self.push_segment(&segment.transform(&(*transform * rotation)),
-                          PushSegmentFlags::UPDATE_BOUNDS);
-        rotation = Transform2F::from_rotation_vector(UnitVector(vec2f(-1.0,  0.0)));
-        self.push_segment(&segment.transform(&(*transform * rotation)),
-                          PushSegmentFlags::UPDATE_BOUNDS);
-        rotation = Transform2F::from_rotation_vector(UnitVector(vec2f( 0.0, -1.0)));
-        self.push_segment(&segment.transform(&(*transform * rotation)),
-                          PushSegmentFlags::UPDATE_BOUNDS);
+        self.push_segment(
+            &segment.transform(transform),
+            PushSegmentFlags::UPDATE_BOUNDS | PushSegmentFlags::INCLUDE_FROM_POINT,
+        );
+        rotation = Transform2F::from_rotation_vector(UnitVector(vec2f(0.0, 1.0)));
+        self.push_segment(
+            &segment.transform(&(*transform * rotation)),
+            PushSegmentFlags::UPDATE_BOUNDS,
+        );
+        rotation = Transform2F::from_rotation_vector(UnitVector(vec2f(-1.0, 0.0)));
+        self.push_segment(
+            &segment.transform(&(*transform * rotation)),
+            PushSegmentFlags::UPDATE_BOUNDS,
+        );
+        rotation = Transform2F::from_rotation_vector(UnitVector(vec2f(0.0, -1.0)));
+        self.push_segment(
+            &segment.transform(&(*transform * rotation)),
+            PushSegmentFlags::UPDATE_BOUNDS,
+        );
     }
 
     /// Returns the segment starting at the point with the given index.
@@ -812,7 +832,7 @@ impl Contour {
     #[inline]
     pub fn point_is_endpoint(&self, point_index: u32) -> bool {
         !self.flags[point_index as usize]
-             .intersects(PointFlags::CONTROL_POINT_0 | PointFlags::CONTROL_POINT_1)
+            .intersects(PointFlags::CONTROL_POINT_0 | PointFlags::CONTROL_POINT_1)
     }
 
     /// Returns `point_index + addend` modulo the number of points in this contour.
@@ -928,8 +948,10 @@ impl Contour {
 
 impl Debug for Contour {
     fn fmt(&self, formatter: &mut Formatter) -> fmt::Result {
-        for (segment_index, segment) in self.iter(ContourIterFlags::IGNORE_CLOSE_SEGMENT)
-                                            .enumerate() {
+        for (segment_index, segment) in self
+            .iter(ContourIterFlags::IGNORE_CLOSE_SEGMENT)
+            .enumerate()
+        {
             if segment_index == 0 {
                 write!(
                     formatter,
@@ -1024,10 +1046,11 @@ impl<'a> Iterator for ContourIter<'a> {
     fn next(&mut self) -> Option<Segment> {
         let contour = self.contour;
 
-        let include_close_segment = self.contour.closed &&
-            !self.flags.contains(ContourIterFlags::IGNORE_CLOSE_SEGMENT);
-        if (self.index == contour.len() && !include_close_segment) ||
-                self.index == contour.len() + 1 {
+        let include_close_segment =
+            self.contour.closed && !self.flags.contains(ContourIterFlags::IGNORE_CLOSE_SEGMENT);
+        if (self.index == contour.len() && !include_close_segment)
+            || self.index == contour.len() + 1
+        {
             return None;
         }
 
@@ -1050,7 +1073,10 @@ impl<'a> Iterator for ContourIter<'a> {
         let point2 = contour.position_of(point2_index);
         self.index += 1;
         if contour.point_is_endpoint(point2_index) {
-            return Some(Segment::quadratic(LineSegment2F::new(point0, point2), point1));
+            return Some(Segment::quadratic(
+                LineSegment2F::new(point0, point2),
+                point1,
+            ));
         }
 
         let point3_index = self.index;

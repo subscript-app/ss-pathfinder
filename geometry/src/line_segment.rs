@@ -12,7 +12,7 @@
 
 use crate::transform2d::Matrix2x2F;
 use crate::util;
-use crate::vector::{Vector2F, vec2f};
+use crate::vector::{vec2f, Vector2F};
 use ss_pathfinder_simd::default::F32x4;
 use std::ops::{Add, Mul, MulAssign, Sub};
 

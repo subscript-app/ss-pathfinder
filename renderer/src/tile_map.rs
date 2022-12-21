@@ -9,18 +9,26 @@
 // except according to those terms.
 
 use ss_pathfinder_geometry::rect::RectI;
-use ss_pathfinder_geometry::vector::{Vector2I, vec2i};
+use ss_pathfinder_geometry::vector::{vec2i, Vector2I};
 
 #[derive(Clone, Debug)]
-pub struct DenseTileMap<T> where T: Clone + Copy {
+pub struct DenseTileMap<T>
+where
+    T: Clone + Copy,
+{
     pub data: Vec<T>,
     pub rect: RectI,
 }
 
-impl<T> DenseTileMap<T> where T: Clone + Copy {
+impl<T> DenseTileMap<T>
+where
+    T: Clone + Copy,
+{
     #[inline]
     pub fn from_builder<F>(mut build: F, rect: RectI) -> DenseTileMap<T>
-                           where F: FnMut(Vector2I) -> T {
+    where
+        F: FnMut(Vector2I) -> T,
+    {
         let mut data = Vec::with_capacity(rect.size().x() as usize * rect.size().y() as usize);
         for y in rect.min_y()..rect.max_y() {
             for x in rect.min_x()..rect.max_x() {
@@ -32,7 +40,8 @@ impl<T> DenseTileMap<T> where T: Clone + Copy {
 
     #[inline]
     pub fn get(&self, coords: Vector2I) -> Option<&T> {
-        self.coords_to_index(coords).and_then(|index| self.data.get(index))
+        self.coords_to_index(coords)
+            .and_then(|index| self.data.get(index))
     }
 
     #[inline]

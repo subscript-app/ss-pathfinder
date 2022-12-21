@@ -11,8 +11,8 @@
 //! GPU memory management.
 
 use crate::{BufferData, BufferTarget, BufferUploadMode, Device, TextureFormat};
-use instant::Instant;
 use fxhash::FxHashMap;
+use instant::Instant;
 use ss_pathfinder_geometry::vector::Vector2I;
 use std::collections::VecDeque;
 use std::default::Default;
@@ -31,7 +31,10 @@ const DECAY_TIME: f32 = 0.250;
 // This helps avoid stalls. This is admittedly a bit of a hack.
 const REUSE_TIME: f32 = 0.015;
 
-pub struct GPUMemoryAllocator<D> where D: Device {
+pub struct GPUMemoryAllocator<D>
+where
+    D: Device,
+{
     general_buffers_in_use: FxHashMap<GeneralBufferID, BufferAllocation<D>>,
     index_buffers_in_use: FxHashMap<IndexBufferID, BufferAllocation<D>>,
     textures_in_use: FxHashMap<TextureID, TextureAllocation<D>>,
@@ -45,34 +48,61 @@ pub struct GPUMemoryAllocator<D> where D: Device {
     bytes_allocated: u64,
 }
 
-struct BufferAllocation<D> where D: Device {
+struct BufferAllocation<D>
+where
+    D: Device,
+{
     buffer: D::Buffer,
     size: u64,
     tag: BufferTag,
 }
 
-struct TextureAllocation<D> where D: Device {
+struct TextureAllocation<D>
+where
+    D: Device,
+{
     texture: D::Texture,
     descriptor: TextureDescriptor,
     tag: TextureTag,
 }
 
-struct FramebufferAllocation<D> where D: Device {
+struct FramebufferAllocation<D>
+where
+    D: Device,
+{
     framebuffer: D::Framebuffer,
     descriptor: TextureDescriptor,
     tag: FramebufferTag,
 }
 
-struct FreeObject<D> where D: Device {
+struct FreeObject<D>
+where
+    D: Device,
+{
     timestamp: Instant,
     kind: FreeObjectKind<D>,
 }
 
-enum FreeObjectKind<D> where D: Device {
-    GeneralBuffer { id: GeneralBufferID, allocation: BufferAllocation<D> },
-    IndexBuffer { id: IndexBufferID, allocation: BufferAllocation<D> },
-    Texture { id: TextureID, allocation: TextureAllocation<D> },
-    Framebuffer { id: FramebufferID, allocation: FramebufferAllocation<D> },
+enum FreeObjectKind<D>
+where
+    D: Device,
+{
+    GeneralBuffer {
+        id: GeneralBufferID,
+        allocation: BufferAllocation<D>,
+    },
+    IndexBuffer {
+        id: IndexBufferID,
+        allocation: BufferAllocation<D>,
+    },
+    Texture {
+        id: TextureID,
+        allocation: TextureAllocation<D>,
+    },
+    Framebuffer {
+        id: FramebufferID,
+        allocation: FramebufferAllocation<D>,
+    },
 }
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq, PartialOrd, Ord, Hash)]
@@ -108,7 +138,10 @@ pub struct TextureTag(pub &'static str);
 #[derive(Clone, Copy, Debug, PartialEq)]
 pub struct FramebufferTag(pub &'static str);
 
-impl<D> GPUMemoryAllocator<D> where D: Device {
+impl<D> GPUMemoryAllocator<D>
+where
+    D: Device,
+{
     pub fn new() -> GPUMemoryAllocator<D> {
         GPUMemoryAllocator {
             general_buffers_in_use: FxHashMap::default(),
@@ -125,8 +158,12 @@ impl<D> GPUMemoryAllocator<D> where D: Device {
         }
     }
 
-    pub fn allocate_general_buffer<T>(&mut self, device: &D, size: u64, tag: BufferTag)
-                                      -> GeneralBufferID {
+    pub fn allocate_general_buffer<T>(
+        &mut self,
+        device: &D,
+        size: u64,
+        tag: BufferTag,
+    ) -> GeneralBufferID {
         let mut byte_size = size * mem::size_of::<T>() as u64;
         if byte_size < MAX_BUFFER_SIZE_CLASS {
             byte_size = byte_size.next_power_of_two();
@@ -139,8 +176,8 @@ impl<D> GPUMemoryAllocator<D> where D: Device {
                 FreeObject {
                     ref timestamp,
                     kind: FreeObjectKind::GeneralBuffer { ref allocation, .. },
-                } if allocation.size == byte_size &&
-                    (now - *timestamp).as_secs_f32() >= REUSE_TIME => {}
+                } if allocation.size == byte_size
+                    && (now - *timestamp).as_secs_f32() >= REUSE_TIME => {}
                 _ => continue,
             }
 
@@ -148,9 +185,7 @@ impl<D> GPUMemoryAllocator<D> where D: Device {
                 Some(FreeObject {
                     kind: FreeObjectKind::GeneralBuffer { id, allocation },
                     ..
-                }) => {
-                    (id, allocation)
-                }
+                }) => (id, allocation),
                 _ => unreachable!(),
             };
 
@@ -161,29 +196,44 @@ impl<D> GPUMemoryAllocator<D> where D: Device {
         }
 
         let buffer = device.create_buffer(BufferUploadMode::Dynamic);
-        device.allocate_buffer::<u8>(&buffer,
-                                     BufferData::Uninitialized(byte_size as usize),
-                                     BufferTarget::Vertex);
+        device.allocate_buffer::<u8>(
+            &buffer,
+            BufferData::Uninitialized(byte_size as usize),
+            BufferTarget::Vertex,
+        );
 
         let id = self.next_general_buffer_id;
         self.next_general_buffer_id.0 += 1;
 
-        debug!("mapping general buffer: {:?} {} ({}x{}) {:?}",
-               id,
-               byte_size,
-               size,
-               mem::size_of::<T>(),
-               tag);
+        debug!(
+            "mapping general buffer: {:?} {} ({}x{}) {:?}",
+            id,
+            byte_size,
+            size,
+            mem::size_of::<T>(),
+            tag
+        );
 
-        self.general_buffers_in_use.insert(id, BufferAllocation { buffer, size: byte_size, tag });
+        self.general_buffers_in_use.insert(
+            id,
+            BufferAllocation {
+                buffer,
+                size: byte_size,
+                tag,
+            },
+        );
         self.bytes_allocated += byte_size;
         self.bytes_committed += byte_size;
 
         id
     }
 
-    pub fn allocate_index_buffer<T>(&mut self, device: &D, size: u64, tag: BufferTag)
-                                    -> IndexBufferID {
+    pub fn allocate_index_buffer<T>(
+        &mut self,
+        device: &D,
+        size: u64,
+        tag: BufferTag,
+    ) -> IndexBufferID {
         let mut byte_size = size * mem::size_of::<T>() as u64;
         if byte_size < MAX_BUFFER_SIZE_CLASS {
             byte_size = byte_size.next_power_of_two();
@@ -196,15 +246,16 @@ impl<D> GPUMemoryAllocator<D> where D: Device {
                 FreeObject {
                     ref timestamp,
                     kind: FreeObjectKind::IndexBuffer { ref allocation, .. },
-                } if allocation.size == byte_size &&
-                    (now - *timestamp).as_secs_f32() >= REUSE_TIME => {}
+                } if allocation.size == byte_size
+                    && (now - *timestamp).as_secs_f32() >= REUSE_TIME => {}
                 _ => continue,
             }
 
             let (id, mut allocation) = match self.free_objects.remove(free_object_index) {
-                Some(FreeObject { kind: FreeObjectKind::IndexBuffer { id, allocation }, .. }) => {
-                    (id, allocation)
-                }
+                Some(FreeObject {
+                    kind: FreeObjectKind::IndexBuffer { id, allocation },
+                    ..
+                }) => (id, allocation),
                 _ => unreachable!(),
             };
 
@@ -215,33 +266,45 @@ impl<D> GPUMemoryAllocator<D> where D: Device {
         }
 
         let buffer = device.create_buffer(BufferUploadMode::Dynamic);
-        device.allocate_buffer::<u8>(&buffer,
-                                     BufferData::Uninitialized(byte_size as usize),
-                                     BufferTarget::Index);
+        device.allocate_buffer::<u8>(
+            &buffer,
+            BufferData::Uninitialized(byte_size as usize),
+            BufferTarget::Index,
+        );
 
         let id = self.next_index_buffer_id;
         self.next_index_buffer_id.0 += 1;
 
-        debug!("mapping index buffer: {:?} {} ({}x{}) {:?}",
-               id,
-               byte_size,
-               size,
-               mem::size_of::<T>(),
-               tag);
+        debug!(
+            "mapping index buffer: {:?} {} ({}x{}) {:?}",
+            id,
+            byte_size,
+            size,
+            mem::size_of::<T>(),
+            tag
+        );
 
-        self.index_buffers_in_use.insert(id, BufferAllocation { buffer, size: byte_size, tag });
+        self.index_buffers_in_use.insert(
+            id,
+            BufferAllocation {
+                buffer,
+                size: byte_size,
+                tag,
+            },
+        );
         self.bytes_allocated += byte_size;
         self.bytes_committed += byte_size;
 
         id
     }
 
-    pub fn allocate_texture(&mut self,
-                            device: &D,
-                            size: Vector2I,
-                            format: TextureFormat,
-                            tag: TextureTag)
-                            -> TextureID {
+    pub fn allocate_texture(
+        &mut self,
+        device: &D,
+        size: Vector2I,
+        format: TextureFormat,
+        tag: TextureTag,
+    ) -> TextureID {
         let descriptor = TextureDescriptor {
             width: size.x() as u32,
             height: size.y() as u32,
@@ -251,15 +314,18 @@ impl<D> GPUMemoryAllocator<D> where D: Device {
 
         for free_object_index in 0..self.free_objects.len() {
             match self.free_objects[free_object_index] {
-                FreeObject { kind: FreeObjectKind::Texture { ref allocation, .. }, .. } if
-                        allocation.descriptor == descriptor => {}
+                FreeObject {
+                    kind: FreeObjectKind::Texture { ref allocation, .. },
+                    ..
+                } if allocation.descriptor == descriptor => {}
                 _ => continue,
             }
 
             let (id, mut allocation) = match self.free_objects.remove(free_object_index) {
-                Some(FreeObject { kind: FreeObjectKind::Texture { id, allocation }, .. }) => {
-                    (id, allocation)
-                }
+                Some(FreeObject {
+                    kind: FreeObjectKind::Texture { id, allocation },
+                    ..
+                }) => (id, allocation),
                 _ => unreachable!(),
             };
 
@@ -275,7 +341,14 @@ impl<D> GPUMemoryAllocator<D> where D: Device {
         let id = self.next_texture_id;
         self.next_texture_id.0 += 1;
 
-        self.textures_in_use.insert(id, TextureAllocation { texture, descriptor, tag });
+        self.textures_in_use.insert(
+            id,
+            TextureAllocation {
+                texture,
+                descriptor,
+                tag,
+            },
+        );
 
         self.bytes_allocated += byte_size;
         self.bytes_committed += byte_size;
@@ -283,12 +356,13 @@ impl<D> GPUMemoryAllocator<D> where D: Device {
         id
     }
 
-    pub fn allocate_framebuffer(&mut self,
-                                device: &D,
-                                size: Vector2I,
-                                format: TextureFormat,
-                                tag: FramebufferTag)
-                                -> FramebufferID {
+    pub fn allocate_framebuffer(
+        &mut self,
+        device: &D,
+        size: Vector2I,
+        format: TextureFormat,
+        tag: FramebufferTag,
+    ) -> FramebufferID {
         let descriptor = TextureDescriptor {
             width: size.x() as u32,
             height: size.y() as u32,
@@ -298,15 +372,16 @@ impl<D> GPUMemoryAllocator<D> where D: Device {
 
         for free_object_index in 0..self.free_objects.len() {
             match self.free_objects[free_object_index].kind {
-                FreeObjectKind::Framebuffer { ref allocation, .. } if allocation.descriptor ==
-                        descriptor => {}
+                FreeObjectKind::Framebuffer { ref allocation, .. }
+                    if allocation.descriptor == descriptor => {}
                 _ => continue,
             }
 
             let (id, mut allocation) = match self.free_objects.remove(free_object_index) {
-                Some(FreeObject { kind: FreeObjectKind::Framebuffer { id, allocation }, .. }) => {
-                    (id, allocation)
-                }
+                Some(FreeObject {
+                    kind: FreeObjectKind::Framebuffer { id, allocation },
+                    ..
+                }) => (id, allocation),
                 _ => unreachable!(),
             };
 
@@ -323,11 +398,14 @@ impl<D> GPUMemoryAllocator<D> where D: Device {
         let id = self.next_framebuffer_id;
         self.next_framebuffer_id.0 += 1;
 
-        self.framebuffers_in_use.insert(id, FramebufferAllocation {
-            framebuffer,
-            descriptor,
-            tag,
-        });
+        self.framebuffers_in_use.insert(
+            id,
+            FramebufferAllocation {
+                framebuffer,
+                descriptor,
+                tag,
+            },
+        );
 
         self.bytes_allocated += byte_size;
         self.bytes_committed += byte_size;
@@ -339,8 +417,8 @@ impl<D> GPUMemoryAllocator<D> where D: Device {
         let now = Instant::now();
         loop {
             match self.free_objects.front() {
-                Some(FreeObject { timestamp, .. }) if (now - *timestamp).as_secs_f32() >=
-                    DECAY_TIME => {}
+                Some(FreeObject { timestamp, .. })
+                    if (now - *timestamp).as_secs_f32() >= DECAY_TIME => {}
                 _ => break,
             }
             match self.free_objects.pop_front() {
@@ -352,15 +430,24 @@ impl<D> GPUMemoryAllocator<D> where D: Device {
                     debug!("purging general buffer: {}", allocation.size);
                     self.bytes_allocated -= allocation.size;
                 }
-                Some(FreeObject { kind: FreeObjectKind::IndexBuffer { allocation, .. }, .. }) => {
+                Some(FreeObject {
+                    kind: FreeObjectKind::IndexBuffer { allocation, .. },
+                    ..
+                }) => {
                     debug!("purging index buffer: {}", allocation.size);
                     self.bytes_allocated -= allocation.size;
                 }
-                Some(FreeObject { kind: FreeObjectKind::Texture { allocation, .. }, .. }) => {
+                Some(FreeObject {
+                    kind: FreeObjectKind::Texture { allocation, .. },
+                    ..
+                }) => {
                     debug!("purging texture: {:?}", allocation.descriptor);
                     self.bytes_allocated -= allocation.descriptor.byte_size();
                 }
-                Some(FreeObject { kind: FreeObjectKind::Framebuffer { allocation, .. }, .. }) => {
+                Some(FreeObject {
+                    kind: FreeObjectKind::Framebuffer { allocation, .. },
+                    ..
+                }) => {
                     debug!("purging framebuffer: {:?}", allocation.descriptor);
                     self.bytes_allocated -= allocation.descriptor.byte_size();
                 }
@@ -369,9 +456,10 @@ impl<D> GPUMemoryAllocator<D> where D: Device {
     }
 
     pub fn free_general_buffer(&mut self, id: GeneralBufferID) {
-        let allocation = self.general_buffers_in_use
-                             .remove(&id)
-                             .expect("Attempted to free unallocated general buffer!");
+        let allocation = self
+            .general_buffers_in_use
+            .remove(&id)
+            .expect("Attempted to free unallocated general buffer!");
         self.bytes_committed -= allocation.size;
         self.free_objects.push_back(FreeObject {
             timestamp: Instant::now(),
@@ -380,9 +468,10 @@ impl<D> GPUMemoryAllocator<D> where D: Device {
     }
 
     pub fn free_index_buffer(&mut self, id: IndexBufferID) {
-        let allocation = self.index_buffers_in_use
-                             .remove(&id)
-                             .expect("Attempted to free unallocated index buffer!");
+        let allocation = self
+            .index_buffers_in_use
+            .remove(&id)
+            .expect("Attempted to free unallocated index buffer!");
         self.bytes_committed -= allocation.size;
         self.free_objects.push_back(FreeObject {
             timestamp: Instant::now(),
@@ -391,9 +480,10 @@ impl<D> GPUMemoryAllocator<D> where D: Device {
     }
 
     pub fn free_texture(&mut self, id: TextureID) {
-        let allocation = self.textures_in_use
-                             .remove(&id)
-                             .expect("Attempted to free unallocated texture!");
+        let allocation = self
+            .textures_in_use
+            .remove(&id)
+            .expect("Attempted to free unallocated texture!");
         let byte_size = allocation.descriptor.byte_size();
         self.bytes_committed -= byte_size;
         self.free_objects.push_back(FreeObject {
@@ -403,9 +493,10 @@ impl<D> GPUMemoryAllocator<D> where D: Device {
     }
 
     pub fn free_framebuffer(&mut self, id: FramebufferID) {
-        let allocation = self.framebuffers_in_use
-                             .remove(&id)
-                             .expect("Attempted to free unallocated framebuffer!");
+        let allocation = self
+            .framebuffers_in_use
+            .remove(&id)
+            .expect("Attempted to free unallocated framebuffer!");
         let byte_size = allocation.descriptor.byte_size();
         self.bytes_committed -= byte_size;
         self.free_objects.push_back(FreeObject {
@@ -450,7 +541,10 @@ impl<D> GPUMemoryAllocator<D> where D: Device {
         ids.sort();
         for id in ids {
             let allocation = &self.general_buffers_in_use[&id];
-            println!("id {:?}: {:?} ({:?} B)", id, allocation.tag, allocation.size);
+            println!(
+                "id {:?}: {:?} ({:?} B)",
+                id, allocation.tag, allocation.size
+            );
         }
 
         println!("Index buffers:");
@@ -458,7 +552,10 @@ impl<D> GPUMemoryAllocator<D> where D: Device {
         ids.sort();
         for id in ids {
             let allocation = &self.index_buffers_in_use[&id];
-            println!("id {:?}: {:?} ({:?} B)", id, allocation.tag, allocation.size);
+            println!(
+                "id {:?}: {:?} ({:?} B)",
+                id, allocation.tag, allocation.size
+            );
         }
 
         println!("Textures:");
@@ -466,13 +563,15 @@ impl<D> GPUMemoryAllocator<D> where D: Device {
         ids.sort();
         for id in ids {
             let allocation = &self.textures_in_use[&id];
-            println!("id {:?}: {:?} {:?}x{:?} {:?} ({:?} B)",
-                     id,
-                     allocation.tag,
-                     allocation.descriptor.width,
-                     allocation.descriptor.height,
-                     allocation.descriptor.format,
-                     allocation.descriptor.byte_size());
+            println!(
+                "id {:?}: {:?} {:?}x{:?} {:?} ({:?} B)",
+                id,
+                allocation.tag,
+                allocation.descriptor.width,
+                allocation.descriptor.height,
+                allocation.descriptor.format,
+                allocation.descriptor.byte_size()
+            );
         }
 
         println!("Framebuffers:");
@@ -480,13 +579,15 @@ impl<D> GPUMemoryAllocator<D> where D: Device {
         ids.sort();
         for id in ids {
             let allocation = &self.framebuffers_in_use[&id];
-            println!("id {:?}: {:?} {:?}x{:?} {:?} ({:?} B)",
-                     id,
-                     allocation.tag,
-                     allocation.descriptor.width,
-                     allocation.descriptor.height,
-                     allocation.descriptor.format,
-                     allocation.descriptor.byte_size());
+            println!(
+                "id {:?}: {:?} {:?}x{:?} {:?} ({:?} B)",
+                id,
+                allocation.tag,
+                allocation.descriptor.width,
+                allocation.descriptor.height,
+                allocation.descriptor.format,
+                allocation.descriptor.byte_size()
+            );
         }
     }
 }

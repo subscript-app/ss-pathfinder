@@ -18,7 +18,10 @@ pub struct RayonExecutor;
 
 impl Executor for RayonExecutor {
     fn build_vector<T, F>(&self, length: usize, builder: F) -> Vec<T>
-                          where T: Send, F: Fn(usize) -> T + Send + Sync {
+    where
+        T: Send,
+        F: Fn(usize) -> T + Send + Sync,
+    {
         (0..length).into_par_iter().map(builder).collect()
     }
 }

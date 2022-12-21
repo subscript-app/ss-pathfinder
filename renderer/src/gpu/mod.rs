@@ -10,8 +10,8 @@
 
 //! The GPU renderer for Pathfinder 3.
 
-pub mod d3d9;
 pub mod d3d11;
+pub mod d3d9;
 pub mod debug;
 pub mod options;
 pub mod perf;

@@ -24,15 +24,15 @@ use ss_pathfinder_geometry::transform2d::Transform2F;
 use ss_pathfinder_geometry::vector::{Vector2F, Vector2I};
 use ss_pathfinder_gpu::TextureSamplingFlags;
 use std::fmt::{Debug, Formatter, Result as DebugResult};
-use std::sync::Arc;
 use std::sync::atomic::{AtomicUsize, Ordering};
+use std::sync::Arc;
 use std::time::Duration;
 use std::u32;
 
-pub const TILE_CTRL_MASK_WINDING:  i32 = 0x1;
+pub const TILE_CTRL_MASK_WINDING: i32 = 0x1;
 pub const TILE_CTRL_MASK_EVEN_ODD: i32 = 0x2;
 
-pub const TILE_CTRL_MASK_0_SHIFT:  i32 = 0;
+pub const TILE_CTRL_MASK_0_SHIFT: i32 = 0;
 
 pub enum RenderCommand {
     // Starts rendering a frame.
@@ -51,15 +51,24 @@ pub enum RenderCommand {
     },
 
     // Allocates a texture page.
-    AllocateTexturePage { page_id: TexturePageId, descriptor: TexturePageDescriptor },
+    AllocateTexturePage {
+        page_id: TexturePageId,
+        descriptor: TexturePageDescriptor,
+    },
 
     // Uploads data to a texture page.
-    UploadTexelData { texels: Arc<Vec<ColorU>>, location: TextureLocation },
+    UploadTexelData {
+        texels: Arc<Vec<ColorU>>,
+        location: TextureLocation,
+    },
 
     // Associates a render target with a texture page.
     //
     // TODO(pcwalton): Add a rect to this so we can render to subrects of a page.
-    DeclareRenderTarget { id: RenderTargetId, location: TextureLocation },
+    DeclareRenderTarget {
+        id: RenderTargetId,
+        location: TextureLocation,
+    },
 
     // Upload texture metadata.
     UploadTextureMetadata(Vec<TextureMetadataEntry>),
@@ -71,7 +80,7 @@ pub enum RenderCommand {
     FlushFillsD3D9,
 
     /// Upload a scene to GPU.
-    /// 
+    ///
     /// This will only be sent if dicing and binning is done on GPU.
     UploadSceneD3D11 {
         draw_segments: SegmentsD3D11,
@@ -95,7 +104,9 @@ pub enum RenderCommand {
     DrawTilesD3D11(DrawTileBatchD3D11),
 
     // Presents a rendered frame.
-    Finish { cpu_build_time: Duration },
+    Finish {
+        cpu_build_time: Duration,
+    },
 }
 
 #[derive(Clone, Copy, PartialEq, Debug, Default)]
@@ -116,7 +127,7 @@ pub struct TextureLocation {
 #[derive(Clone, Debug)]
 pub struct TileBatchDataD3D11 {
     /// The ID of this batch.
-    /// 
+    ///
     /// The renderer should not assume that these values are consecutive.
     pub batch_id: TileBatchId,
     /// The number of paths in this batch.
@@ -147,7 +158,7 @@ pub struct PrepareTilesInfoD3D11 {
     pub backdrops: Vec<BackdropInfoD3D11>,
 
     /// Mapping from path index to metadata needed to compute propagation on GPU.
-    /// 
+    ///
     /// This contains indices into the `tiles` vector.
     pub propagate_metadata: Vec<PropagateMetadataD3D11>,
 
@@ -184,7 +195,7 @@ pub struct ClippedPathInfo {
     pub clipped_path_count: u32,
 
     /// The maximum number of clipped tiles.
-    /// 
+    ///
     /// This is used to allocate vertex buffers.
     pub max_clipped_tile_count: u32,
 
@@ -193,7 +204,7 @@ pub struct ClippedPathInfo {
 }
 
 /// Together with the `TileBatchId`, uniquely identifies a path on the renderer side.
-/// 
+///
 /// Generally, `PathIndex(!0)` represents no path.
 #[derive(Clone, Copy, PartialEq, Eq, Hash, Debug)]
 pub struct PathBatchIndex(pub u32);
@@ -438,8 +449,10 @@ impl PathBatchIndex {
 
 impl AlphaTileId {
     #[inline]
-    pub fn new(next_alpha_tile_index: &[AtomicUsize; ALPHA_TILE_LEVEL_COUNT], level: usize) 
-               -> AlphaTileId {
+    pub fn new(
+        next_alpha_tile_index: &[AtomicUsize; ALPHA_TILE_LEVEL_COUNT],
+        level: usize,
+    ) -> AlphaTileId {
         let alpha_tile_index = next_alpha_tile_index[level].fetch_add(1, Ordering::Relaxed);
         debug_assert!(alpha_tile_index < ALPHA_TILES_PER_LEVEL);
         AlphaTileId((level * ALPHA_TILES_PER_LEVEL + alpha_tile_index) as u32)
@@ -470,11 +483,22 @@ impl Debug for RenderCommand {
     fn fmt(&self, formatter: &mut Formatter) -> DebugResult {
         match *self {
             RenderCommand::Start { .. } => write!(formatter, "Start"),
-            RenderCommand::AllocateTexturePage { page_id, descriptor: _ } => {
+            RenderCommand::AllocateTexturePage {
+                page_id,
+                descriptor: _,
+            } => {
                 write!(formatter, "AllocateTexturePage({})", page_id.0)
             }
-            RenderCommand::UploadTexelData { ref texels, location } => {
-                write!(formatter, "UploadTexelData(x{:?}, {:?})", texels.len(), location)
+            RenderCommand::UploadTexelData {
+                ref texels,
+                location,
+            } => {
+                write!(
+                    formatter,
+                    "UploadTexelData(x{:?}, {:?})",
+                    texels.len(),
+                    location
+                )
             }
             RenderCommand::DeclareRenderTarget { id, location } => {
                 write!(formatter, "DeclareRenderTarget({:?}, {:?})", id, location)
@@ -486,23 +510,29 @@ impl Debug for RenderCommand {
                 write!(formatter, "AddFillsD3D9(x{})", fills.len())
             }
             RenderCommand::FlushFillsD3D9 => write!(formatter, "FlushFills"),
-            RenderCommand::UploadSceneD3D11 { ref draw_segments, ref clip_segments } => {
-                write!(formatter,
-                       "UploadSceneD3D11(DP x{}, DI x{}, CP x{}, CI x{})",
-                       draw_segments.points.len(),
-                       draw_segments.indices.len(),
-                       clip_segments.points.len(),
-                       clip_segments.indices.len())
+            RenderCommand::UploadSceneD3D11 {
+                ref draw_segments,
+                ref clip_segments,
+            } => {
+                write!(
+                    formatter,
+                    "UploadSceneD3D11(DP x{}, DI x{}, CP x{}, CI x{})",
+                    draw_segments.points.len(),
+                    draw_segments.indices.len(),
+                    clip_segments.points.len(),
+                    clip_segments.indices.len()
+                )
             }
             RenderCommand::PrepareClipTilesD3D11(ref batch) => {
                 let clipped_path_count = match batch.clipped_path_info {
                     None => 0,
                     Some(ref clipped_path_info) => clipped_path_info.clipped_path_count,
                 };
-                write!(formatter,
-                       "PrepareClipTilesD3D11({:?}, C {})",
-                       batch.batch_id,
-                       clipped_path_count)
+                write!(
+                    formatter,
+                    "PrepareClipTilesD3D11({:?}, C {})",
+                    batch.batch_id, clipped_path_count
+                )
             }
             RenderCommand::PushRenderTarget(render_target_id) => {
                 write!(formatter, "PushRenderTarget({:?})", render_target_id)
@@ -512,13 +542,18 @@ impl Debug for RenderCommand {
                 write!(formatter, "DrawTilesD3D9(x{:?})", batch.tiles.len())
             }
             RenderCommand::DrawTilesD3D11(ref batch) => {
-                write!(formatter,
-                       "DrawTilesD3D11({:?}, C0 {:?})",
-                       batch.tile_batch_data.batch_id,
-                       batch.color_texture)
+                write!(
+                    formatter,
+                    "DrawTilesD3D11({:?}, C0 {:?})",
+                    batch.tile_batch_data.batch_id, batch.color_texture
+                )
             }
             RenderCommand::Finish { cpu_build_time } => {
-                write!(formatter, "Finish({} ms)", cpu_build_time.as_secs_f64() * 1000.0)
+                write!(
+                    formatter,
+                    "Finish({} ms)",
+                    cpu_build_time.as_secs_f64() * 1000.0
+                )
             }
         }
     }

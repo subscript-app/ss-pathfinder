@@ -15,7 +15,7 @@ use crate::render_target::RenderTargetId;
 use crate::util;
 use ss_pathfinder_color::{self as color, ColorU};
 use ss_pathfinder_geometry::transform2d::Transform2F;
-use ss_pathfinder_geometry::vector::{Vector2I, vec2i};
+use ss_pathfinder_geometry::vector::{vec2i, Vector2I};
 use std::collections::hash_map::DefaultHasher;
 use std::fmt::{self, Debug, Formatter};
 use std::hash::{Hash, Hasher};
@@ -46,7 +46,7 @@ pub enum PatternSource {
         id: RenderTargetId,
         /// The device pixel size of the render target.
         size: Vector2I,
-    }
+    },
 }
 
 /// A raster image, in 32-bit RGBA (8 bits per channel), non-premultiplied form.
@@ -213,7 +213,12 @@ impl Image {
         pixels.hash(&mut pixels_hasher);
         let pixels_hash = pixels_hasher.finish();
 
-        Image { size, pixels, pixels_hash, is_opaque }
+        Image {
+            size,
+            pixels,
+            pixels_hash,
+            is_opaque,
+        }
     }
 
     /// A convenience function to create a new image with the given image from the `image` crate.
@@ -280,7 +285,10 @@ impl Debug for Image {
 }
 
 impl Hash for Image {
-    fn hash<H>(&self, hasher: &mut H) where H: Hasher {
+    fn hash<H>(&self, hasher: &mut H)
+    where
+        H: Hasher,
+    {
         self.size.hash(hasher);
         self.pixels_hash.hash(hasher);
         self.is_opaque.hash(hasher);
@@ -290,7 +298,10 @@ impl Hash for Image {
 impl Eq for Pattern {}
 
 impl Hash for Pattern {
-    fn hash<H>(&self, state: &mut H) where H: Hasher {
+    fn hash<H>(&self, state: &mut H)
+    where
+        H: Hasher,
+    {
         self.source.hash(state);
         util::hash_transform2f(self.transform, state);
         self.flags.hash(state);

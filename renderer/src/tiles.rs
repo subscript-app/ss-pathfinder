@@ -8,8 +8,8 @@
 // option. This file may not be copied, modified, or distributed
 // except according to those terms.
 
+use crate::gpu_data::{TileObjectPrimitive, TILE_CTRL_MASK_WINDING};
 use crate::gpu_data::{TILE_CTRL_MASK_0_SHIFT, TILE_CTRL_MASK_EVEN_ODD};
-use crate::gpu_data::{TILE_CTRL_MASK_WINDING, TileObjectPrimitive};
 use crate::paint::PaintId;
 use ss_pathfinder_content::effects::BlendMode;
 use ss_pathfinder_content::fill::FillRule;
@@ -62,10 +62,14 @@ impl TilingPathInfo {
 }
 
 pub fn round_rect_out_to_tile_bounds(rect: RectF) -> RectI {
-    (rect * vec2f(1.0 / TILE_WIDTH as f32, 1.0 / TILE_HEIGHT as f32)).round_out().to_i32()
+    (rect * vec2f(1.0 / TILE_WIDTH as f32, 1.0 / TILE_HEIGHT as f32))
+        .round_out()
+        .to_i32()
 }
 
 impl TileObjectPrimitive {
     #[inline]
-    pub fn is_solid(&self) -> bool { !self.alpha_tile_id.is_valid() }
+    pub fn is_solid(&self) -> bool {
+        !self.alpha_tile_id.is_valid()
+    }
 }

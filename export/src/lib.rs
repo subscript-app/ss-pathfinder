@@ -10,7 +10,7 @@
 
 use ss_pathfinder_content::outline::ContourIterFlags;
 use ss_pathfinder_content::segment::SegmentKind;
-use ss_pathfinder_geometry::vector::{Vector2F, vec2f};
+use ss_pathfinder_geometry::vector::{vec2f, Vector2F};
 use ss_pathfinder_renderer::scene::{DrawPathId, Scene};
 use std::fmt;
 use std::io::{self, Write};
@@ -39,7 +39,7 @@ impl Export for Scene {
         match format {
             FileFormat::SVG => export_svg(self, writer),
             FileFormat::PDF => export_pdf(self, writer),
-            FileFormat::PS => export_ps(self, writer)
+            FileFormat::PS => export_ps(self, writer),
         }
     }
 }
@@ -63,7 +63,12 @@ fn export_svg<W: Write>(scene: &Scene, writer: &mut W) -> io::Result<()> {
         if !draw_path.name.is_empty() {
             write!(writer, " id=\"{}\"", draw_path.name)?;
         }
-        writeln!(writer, " fill=\"{:?}\" d=\"{:?}\" />", paint.base_color(), draw_path.outline)?;
+        writeln!(
+            writer,
+            " fill=\"{:?}\" d=\"{:?}\" />",
+            paint.base_color(),
+            draw_path.outline
+        )?;
     }
     writeln!(writer, "</svg>")?;
     Ok(())
@@ -107,11 +112,11 @@ fn export_pdf<W: Write>(scene: &Scene, writer: &mut W) -> io::Result<()> {
                         let c2 = c * (2.0 / 3.0) + p * (1.0 / 3.0);
                         pdf.cubic_to(c1, c2, p);
                     }
-                    SegmentKind::Cubic => {
-                        pdf.cubic_to(tr(segment.ctrl.from()),
-                                     tr(segment.ctrl.to()),
-                                     tr(segment.baseline.to()))
-                    }
+                    SegmentKind::Cubic => pdf.cubic_to(
+                        tr(segment.ctrl.from()),
+                        tr(segment.ctrl.to()),
+                        tr(segment.baseline.to()),
+                    ),
                 }
             }
 
@@ -136,11 +141,15 @@ fn export_ps<W: Write>(scene: &Scene, writer: &mut W) -> io::Result<()> {
 
     let view_box = scene.view_box();
     writeln!(writer, "%!PS-Adobe-3.0 EPSF-3.0")?;
-    writeln!(writer, "%%BoundingBox: {:.0} {:.0}",
+    writeln!(
+        writer,
+        "%%BoundingBox: {:.0} {:.0}",
         P(view_box.origin()),
         P(view_box.size()),
     )?;
-    writeln!(writer, "%%HiResBoundingBox: {} {}",
+    writeln!(
+        writer,
+        "%%HiResBoundingBox: {} {}",
         P(view_box.origin()),
         P(view_box.size()),
     )?;
@@ -176,7 +185,9 @@ fn export_ps<W: Write>(scene: &Scene, writer: &mut W) -> io::Result<()> {
                         writeln!(writer, "{} {} {} curveto", P(c1), P(c2), P(p))?;
                     }
                     SegmentKind::Cubic => {
-                        writeln!(writer, "{} {} {} curveto",
+                        writeln!(
+                            writer,
+                            "{} {} {} curveto",
                             P(segment.ctrl.from()),
                             P(segment.ctrl.to()),
                             P(segment.baseline.to())
@@ -202,5 +213,3 @@ fn export_ps<W: Write>(scene: &Scene, writer: &mut W) -> io::Result<()> {
     writeln!(writer, "showpage")?;
     Ok(())
 }
-
-

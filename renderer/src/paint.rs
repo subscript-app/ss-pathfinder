@@ -23,7 +23,7 @@ use ss_pathfinder_content::render_target::RenderTargetId;
 use ss_pathfinder_geometry::line_segment::LineSegment2F;
 use ss_pathfinder_geometry::rect::{RectF, RectI};
 use ss_pathfinder_geometry::transform2d::Transform2F;
-use ss_pathfinder_geometry::vector::{Vector2F, Vector2I, vec2f, vec2i};
+use ss_pathfinder_geometry::vector::{vec2f, vec2i, Vector2F, Vector2I};
 use ss_pathfinder_gpu::TextureSamplingFlags;
 use ss_pathfinder_simd::default::{F32x2, F32x4};
 use std::f32;
@@ -118,7 +118,10 @@ impl Paint {
     /// Creates a simple paint from a single base color.
     #[inline]
     pub fn from_color(color: ColorU) -> Paint {
-        Paint { base_color: color, overlay: None }
+        Paint {
+            base_color: color,
+            overlay: None,
+        }
     }
 
     /// Creates a paint from a gradient.
@@ -167,12 +170,10 @@ impl Paint {
 
         match self.overlay {
             None => true,
-            Some(ref overlay) => {
-                match overlay.contents {
-                    PaintContents::Gradient(ref gradient) => gradient.is_opaque(),
-                    PaintContents::Pattern(ref pattern) => pattern.is_opaque(),
-                }
-            }
+            Some(ref overlay) => match overlay.contents {
+                PaintContents::Gradient(ref gradient) => gradient.is_opaque(),
+                PaintContents::Pattern(ref pattern) => pattern.is_opaque(),
+            },
         }
     }
 
@@ -186,12 +187,10 @@ impl Paint {
 
         match self.overlay {
             None => true,
-            Some(ref overlay) => {
-                match overlay.contents {
-                    PaintContents::Gradient(ref gradient) => gradient.is_fully_transparent(),
-                    PaintContents::Pattern(_) => false,
-                }
-            }
+            Some(ref overlay) => match overlay.contents {
+                PaintContents::Gradient(ref gradient) => gradient.is_fully_transparent(),
+                PaintContents::Pattern(_) => false,
+            },
         }
     }
 
@@ -251,12 +250,10 @@ impl Paint {
     pub fn pattern(&self) -> Option<&Pattern> {
         match self.overlay {
             None => None,
-            Some(ref overlay) => {
-                match overlay.contents {
-                    PaintContents::Pattern(ref pattern) => Some(pattern),
-                    _ => None,
-                }
-            }
+            Some(ref overlay) => match overlay.contents {
+                PaintContents::Pattern(ref pattern) => Some(pattern),
+                _ => None,
+            },
         }
     }
 
@@ -265,12 +262,10 @@ impl Paint {
     pub fn pattern_mut(&mut self) -> Option<&mut Pattern> {
         match self.overlay {
             None => None,
-            Some(ref mut overlay) => {
-                match overlay.contents {
-                    PaintContents::Pattern(ref mut pattern) => Some(pattern),
-                    _ => None,
-                }
-            }
+            Some(ref mut overlay) => match overlay.contents {
+                PaintContents::Pattern(ref mut pattern) => Some(pattern),
+                _ => None,
+            },
         }
     }
 
@@ -279,12 +274,10 @@ impl Paint {
     pub fn gradient(&self) -> Option<&Gradient> {
         match self.overlay {
             None => None,
-            Some(ref overlay) => {
-                match overlay.contents {
-                    PaintContents::Gradient(ref gradient) => Some(gradient),
-                    _ => None,
-                }
-            }
+            Some(ref overlay) => match overlay.contents {
+                PaintContents::Gradient(ref gradient) => Some(gradient),
+                _ => None,
+            },
         }
     }
 }
@@ -392,13 +385,17 @@ impl Palette {
     pub(crate) fn push_render_target(&mut self, render_target: RenderTarget) -> RenderTargetId {
         let id = self.render_targets.len() as u32;
         self.render_targets.push(render_target);
-        RenderTargetId { scene: self.scene_id.0, render_target: id }
+        RenderTargetId {
+            scene: self.scene_id.0,
+            render_target: id,
+        }
     }
 
-    pub(crate) fn build_paint_info(&mut self,
-                                   texture_manager: &mut PaintTextureManager,
-                                   render_transform: Transform2F)
-                                   -> PaintInfo {
+    pub(crate) fn build_paint_info(
+        &mut self,
+        texture_manager: &mut PaintTextureManager,
+        render_transform: Transform2F,
+    ) -> PaintInfo {
         // Assign render target locations.
         let mut transient_paint_locations = vec![];
         let render_target_metadata =
@@ -410,9 +407,11 @@ impl Palette {
             gradient_tile_builder,
             image_texel_info,
             used_image_hashes,
-        } = self.assign_paint_locations(&render_target_metadata,
-                                        texture_manager,
-                                        &mut transient_paint_locations);
+        } = self.assign_paint_locations(
+            &render_target_metadata,
+            texture_manager,
+            &mut transient_paint_locations,
+        );
 
         // Calculate texture transforms.
         self.calculate_texture_transforms(&mut paint_metadata, texture_manager, render_transform);
@@ -425,36 +424,45 @@ impl Palette {
         self.allocate_textures(&mut render_commands, texture_manager);
 
         // Create render commands.
-        self.create_render_commands(&mut render_commands,
-                                    render_target_metadata,
-                                    gradient_tile_builder,
-                                    image_texel_info);
+        self.create_render_commands(
+            &mut render_commands,
+            render_target_metadata,
+            gradient_tile_builder,
+            image_texel_info,
+        );
 
         // Free transient locations and unused images, now that they're no longer needed.
         self.free_transient_locations(texture_manager, transient_paint_locations);
         self.free_unused_images(texture_manager, used_image_hashes);
 
-        PaintInfo { render_commands, paint_metadata }
+        PaintInfo {
+            render_commands,
+            paint_metadata,
+        }
     }
 
-    fn assign_render_target_locations(&self,
-                                      texture_manager: &mut PaintTextureManager,
-                                      transient_paint_locations: &mut Vec<TextureLocation>)
-                                      -> Vec<RenderTargetMetadata> {
+    fn assign_render_target_locations(
+        &self,
+        texture_manager: &mut PaintTextureManager,
+        transient_paint_locations: &mut Vec<TextureLocation>,
+    ) -> Vec<RenderTargetMetadata> {
         let mut render_target_metadata = vec![];
         for render_target in &self.render_targets {
-            let location = texture_manager.allocator.allocate_image(render_target.size());
+            let location = texture_manager
+                .allocator
+                .allocate_image(render_target.size());
             render_target_metadata.push(RenderTargetMetadata { location });
             transient_paint_locations.push(location);
         }
         render_target_metadata
     }
 
-    fn assign_paint_locations(&self,
-                              render_target_metadata: &[RenderTargetMetadata],
-                              texture_manager: &mut PaintTextureManager,
-                              transient_paint_locations: &mut Vec<TextureLocation>)
-                              -> PaintLocationsInfo {
+    fn assign_paint_locations(
+        &self,
+        render_target_metadata: &[RenderTargetMetadata],
+        texture_manager: &mut PaintTextureManager,
+        transient_paint_locations: &mut Vec<TextureLocation>,
+    ) -> PaintLocationsInfo {
         let mut paint_metadata = vec![];
         let mut gradient_tile_builder = GradientTileBuilder::new();
         let mut image_texel_info = vec![];
@@ -476,10 +484,11 @@ impl Palette {
 
                             // FIXME(pcwalton): The gradient size might not be big enough. Detect
                             // this.
-                            let location =
-                                gradient_tile_builder.allocate(allocator,
-                                                               transient_paint_locations,
-                                                               gradient);
+                            let location = gradient_tile_builder.allocate(
+                                allocator,
+                                transient_paint_locations,
+                                gradient,
+                            );
                             Some(PaintColorTextureMetadata {
                                 location,
                                 page_scale: allocator.page_scale(location.page),
@@ -496,12 +505,17 @@ impl Palette {
                             })
                         }
                         PaintContents::Pattern(ref pattern) => {
-                            let border = vec2i(if pattern.repeat_x() { 0 } else { 1 },
-                                               if pattern.repeat_y() { 0 } else { 1 });
+                            let border = vec2i(
+                                if pattern.repeat_x() { 0 } else { 1 },
+                                if pattern.repeat_y() { 0 } else { 1 },
+                            );
 
                             let location;
                             match *pattern.source() {
-                                PatternSource::RenderTarget { id: render_target_id, .. } => {
+                                PatternSource::RenderTarget {
+                                    id: render_target_id,
+                                    ..
+                                } => {
                                     let index = render_target_id.render_target as usize;
                                     location = render_target_metadata[index].location;
                                 }
@@ -519,9 +533,11 @@ impl Palette {
                                             let allocation_mode = AllocationMode::OwnPage;
                                             location = allocator.allocate(
                                                 image.size() + border * 2,
-                                                allocation_mode);
-                                            texture_manager.cached_images.insert(image_hash,
-                                                                                 location);
+                                                allocation_mode,
+                                            );
+                                            texture_manager
+                                                .cached_images
+                                                .insert(image_hash, location);
                                         }
                                     }
                                     image_texel_info.push(ImageTexelInfo {
@@ -542,8 +558,10 @@ impl Palette {
                                 sampling_flags.insert(TextureSamplingFlags::REPEAT_V);
                             }
                             if !pattern.smoothing_enabled() {
-                                sampling_flags.insert(TextureSamplingFlags::NEAREST_MIN |
-                                                    TextureSamplingFlags::NEAREST_MAG);
+                                sampling_flags.insert(
+                                    TextureSamplingFlags::NEAREST_MIN
+                                        | TextureSamplingFlags::NEAREST_MAG,
+                                );
                             }
 
                             let filter = match pattern.filter() {
@@ -582,24 +600,31 @@ impl Palette {
         }
     }
 
-    fn calculate_texture_transforms(&self,
-                                    paint_metadata: &mut [PaintMetadata],
-                                    texture_manager: &mut PaintTextureManager,
-                                    render_transform: Transform2F) {
+    fn calculate_texture_transforms(
+        &self,
+        paint_metadata: &mut [PaintMetadata],
+        texture_manager: &mut PaintTextureManager,
+        render_transform: Transform2F,
+    ) {
         for (paint, metadata) in self.paints.iter().zip(paint_metadata.iter_mut()) {
             let mut color_texture_metadata = match metadata.color_texture_metadata {
                 None => continue,
                 Some(ref mut color_texture_metadata) => color_texture_metadata,
             };
 
-            let texture_scale = texture_manager.allocator
-                                               .page_scale(color_texture_metadata.location.page);
+            let texture_scale = texture_manager
+                .allocator
+                .page_scale(color_texture_metadata.location.page);
             let texture_rect = color_texture_metadata.location.rect;
-            color_texture_metadata.transform = match paint.overlay    
-                                                          .as_ref()
-                                                          .expect("Why do we have color texture \
-                                                                   metadata but no overlay?")
-                                                          .contents {
+            color_texture_metadata.transform = match paint
+                .overlay
+                .as_ref()
+                .expect(
+                    "Why do we have color texture \
+                                                                   metadata but no overlay?",
+                )
+                .contents
+            {
                 PaintContents::Gradient(Gradient {
                     geometry: GradientGeometry::Linear(gradient_line),
                     ..
@@ -620,16 +645,16 @@ impl Palette {
                         PatternSource::Image(_) => {
                             let texture_origin_uv =
                                 rect_to_uv(texture_rect, texture_scale).origin();
-                            Transform2F::from_scale(texture_scale).translate(texture_origin_uv) *
-                                pattern.transform().inverse()
+                            Transform2F::from_scale(texture_scale).translate(texture_origin_uv)
+                                * pattern.transform().inverse()
                         }
                         PatternSource::RenderTarget { .. } => {
                             // FIXME(pcwalton): Only do this in GL, not Metal!
                             let texture_origin_uv =
                                 rect_to_uv(texture_rect, texture_scale).lower_left();
-                            Transform2F::from_translation(texture_origin_uv) *
-                                Transform2F::from_scale(texture_scale * vec2f(1.0, -1.0)) *
-                                pattern.transform().inverse()
+                            Transform2F::from_translation(texture_origin_uv)
+                                * Transform2F::from_scale(texture_scale * vec2f(1.0, -1.0))
+                                * pattern.transform().inverse()
                         }
                     }
                 }
@@ -638,10 +663,13 @@ impl Palette {
         }
     }
 
-    fn create_texture_metadata(&self, paint_metadata: &[PaintMetadata])
-                               -> Vec<TextureMetadataEntry> {
-        paint_metadata.iter().map(|paint_metadata| {
-            TextureMetadataEntry {
+    fn create_texture_metadata(
+        &self,
+        paint_metadata: &[PaintMetadata],
+    ) -> Vec<TextureMetadataEntry> {
+        paint_metadata
+            .iter()
+            .map(|paint_metadata| TextureMetadataEntry {
                 color_0_transform: match paint_metadata.color_texture_metadata {
                     None => Transform2F::default(),
                     Some(ref color_texture_metadata) => color_texture_metadata.transform,
@@ -654,31 +682,41 @@ impl Palette {
                 base_color: paint_metadata.base_color,
                 filter: paint_metadata.filter(),
                 blend_mode: paint_metadata.blend_mode,
-            }
-        }).collect()
+            })
+            .collect()
     }
 
-    fn allocate_textures(&self,
-                         render_commands: &mut Vec<RenderCommand>,
-                         texture_manager: &mut PaintTextureManager) {
+    fn allocate_textures(
+        &self,
+        render_commands: &mut Vec<RenderCommand>,
+        texture_manager: &mut PaintTextureManager,
+    ) {
         for page_id in texture_manager.allocator.page_ids() {
             let page_size = texture_manager.allocator.page_size(page_id);
             let descriptor = TexturePageDescriptor { size: page_size };
 
             if texture_manager.allocator.page_is_new(page_id) {
-                render_commands.push(RenderCommand::AllocateTexturePage { page_id, descriptor });
+                render_commands.push(RenderCommand::AllocateTexturePage {
+                    page_id,
+                    descriptor,
+                });
             }
         }
         texture_manager.allocator.mark_all_pages_as_allocated();
     }
 
-    fn create_render_commands(&self,
-                              render_commands: &mut Vec<RenderCommand>,
-                              render_target_metadata: Vec<RenderTargetMetadata>,
-                              gradient_tile_builder: GradientTileBuilder,
-                              image_texel_info: Vec<ImageTexelInfo>) {
+    fn create_render_commands(
+        &self,
+        render_commands: &mut Vec<RenderCommand>,
+        render_target_metadata: Vec<RenderTargetMetadata>,
+        gradient_tile_builder: GradientTileBuilder,
+        image_texel_info: Vec<ImageTexelInfo>,
+    ) {
         for (index, metadata) in render_target_metadata.iter().enumerate() {
-            let id = RenderTargetId { scene: self.scene_id.0, render_target: index as u32 };
+            let id = RenderTargetId {
+                scene: self.scene_id.0,
+                render_target: index as u32,
+            };
             render_commands.push(RenderCommand::DeclareRenderTarget {
                 id,
                 location: metadata.location,
@@ -693,18 +731,22 @@ impl Palette {
         }
     }
 
-    fn free_transient_locations(&self,
-                                texture_manager: &mut PaintTextureManager,
-                                transient_paint_locations: Vec<TextureLocation>) {
+    fn free_transient_locations(
+        &self,
+        texture_manager: &mut PaintTextureManager,
+        transient_paint_locations: Vec<TextureLocation>,
+    ) {
         for location in transient_paint_locations {
             texture_manager.allocator.free(location);
         }
     }
 
     // Frees images that are cached but not used this frame.
-    fn free_unused_images(&self,
-                          texture_manager: &mut PaintTextureManager,
-                          used_image_hashes: HashSet<ImageHash>) {
+    fn free_unused_images(
+        &self,
+        texture_manager: &mut PaintTextureManager,
+        used_image_hashes: HashSet<ImageHash>,
+    ) {
         let cached_images = &mut texture_manager.cached_images;
         let allocator = &mut texture_manager.allocator;
         cached_images.retain(|image_hash, location| {
@@ -719,9 +761,9 @@ impl Palette {
     pub(crate) fn append_palette(&mut self, palette: Palette) -> MergedPaletteInfo {
         // Merge render targets.
         let mut render_target_mapping = HashMap::new();
-        for (old_render_target_index, render_target) in palette.render_targets
-                                                               .into_iter()
-                                                               .enumerate() {
+        for (old_render_target_index, render_target) in
+            palette.render_targets.into_iter().enumerate()
+        {
             let old_render_target_id = RenderTargetId {
                 scene: palette.scene_id.0,
                 render_target: old_render_target_index as u32,
@@ -736,31 +778,33 @@ impl Palette {
             let old_paint_id = PaintId(old_paint_index as u16);
             let new_paint_id = match *old_paint.overlay() {
                 None => self.push_paint(old_paint),
-                Some(ref overlay) => {
-                    match *overlay.contents() {
-                        PaintContents::Pattern(ref pattern) => {
-                            match pattern.source() {
-                                PatternSource::RenderTarget { id: old_render_target_id, size } => {
-                                    let mut new_pattern =
-                                        Pattern::from_render_target(*old_render_target_id, *size);
-                                    new_pattern.set_filter(pattern.filter());
-                                    new_pattern.apply_transform(pattern.transform());
-                                    new_pattern.set_repeat_x(pattern.repeat_x());
-                                    new_pattern.set_repeat_y(pattern.repeat_y());
-                                    new_pattern.set_smoothing_enabled(pattern.smoothing_enabled());
-                                    self.push_paint(&Paint::from_pattern(new_pattern))
-                                }
-                                _ => self.push_paint(old_paint),
-                            }
+                Some(ref overlay) => match *overlay.contents() {
+                    PaintContents::Pattern(ref pattern) => match pattern.source() {
+                        PatternSource::RenderTarget {
+                            id: old_render_target_id,
+                            size,
+                        } => {
+                            let mut new_pattern =
+                                Pattern::from_render_target(*old_render_target_id, *size);
+                            new_pattern.set_filter(pattern.filter());
+                            new_pattern.apply_transform(pattern.transform());
+                            new_pattern.set_repeat_x(pattern.repeat_x());
+                            new_pattern.set_repeat_y(pattern.repeat_y());
+                            new_pattern.set_smoothing_enabled(pattern.smoothing_enabled());
+                            self.push_paint(&Paint::from_pattern(new_pattern))
                         }
                         _ => self.push_paint(old_paint),
-                    }
-                }
+                    },
+                    _ => self.push_paint(old_paint),
+                },
             };
             paint_mapping.insert(old_paint_id, new_paint_id);
         }
 
-        MergedPaletteInfo { render_target_mapping, paint_mapping }
+        MergedPaletteInfo {
+            render_target_mapping,
+            paint_mapping,
+        }
     }
 }
 
@@ -782,25 +826,27 @@ impl PaintMetadata {
     pub(crate) fn filter(&self) -> Filter {
         match self.color_texture_metadata {
             None => Filter::None,
-            Some(ref color_metadata) => {
-                match color_metadata.filter {
-                    PaintFilter::None => Filter::None,
-                    PaintFilter::RadialGradient { line, radii } => {
-                        let uv_rect = rect_to_uv(color_metadata.location.rect,
-                                                 color_metadata.page_scale).contract(
-                            vec2f(0.0, color_metadata.page_scale.y() * 0.5));
-                        Filter::RadialGradient { line, radii, uv_origin: uv_rect.origin() }
-                    }
-                    PaintFilter::PatternFilter(pattern_filter) => {
-                        Filter::PatternFilter(pattern_filter)
+            Some(ref color_metadata) => match color_metadata.filter {
+                PaintFilter::None => Filter::None,
+                PaintFilter::RadialGradient { line, radii } => {
+                    let uv_rect =
+                        rect_to_uv(color_metadata.location.rect, color_metadata.page_scale)
+                            .contract(vec2f(0.0, color_metadata.page_scale.y() * 0.5));
+                    Filter::RadialGradient {
+                        line,
+                        radii,
+                        uv_origin: uv_rect.origin(),
                     }
                 }
-            }
+                PaintFilter::PatternFilter(pattern_filter) => Filter::PatternFilter(pattern_filter),
+            },
         }
     }
 
     pub(crate) fn tile_batch_texture(&self) -> Option<TileBatchTexture> {
-        self.color_texture_metadata.as_ref().map(PaintColorTextureMetadata::as_tile_batch_texture)
+        self.color_texture_metadata
+            .as_ref()
+            .map(PaintColorTextureMetadata::as_tile_batch_texture)
     }
 }
 
@@ -825,13 +871,13 @@ impl GradientTileBuilder {
         GradientTileBuilder { tiles: vec![] }
     }
 
-    fn allocate(&mut self,
-                allocator: &mut TextureAllocator,
-                transient_paint_locations: &mut Vec<TextureLocation>,
-                gradient: &Gradient)
-                -> TextureLocation {
-        if self.tiles.is_empty() ||
-                self.tiles.last().unwrap().next_index == GRADIENT_TILE_LENGTH {
+    fn allocate(
+        &mut self,
+        allocator: &mut TextureAllocator,
+        transient_paint_locations: &mut Vec<TextureLocation>,
+        gradient: &Gradient,
+    ) -> TextureLocation {
+        if self.tiles.is_empty() || self.tiles.last().unwrap().next_index == GRADIENT_TILE_LENGTH {
             let size = Vector2I::splat(GRADIENT_TILE_LENGTH as i32);
             let area = size.x() as usize * size.y() as usize;
             let page_location = allocator.allocate(size, AllocationMode::OwnPage);
@@ -846,8 +892,10 @@ impl GradientTileBuilder {
         let mut data = self.tiles.last_mut().unwrap();
         let location = TextureLocation {
             page: data.page,
-            rect: RectI::new(vec2i(0, data.next_index as i32),
-                             vec2i(GRADIENT_TILE_LENGTH as i32, 1)),
+            rect: RectI::new(
+                vec2i(0, data.next_index as i32),
+                vec2i(GRADIENT_TILE_LENGTH as i32, 1),
+            ),
         };
         data.next_index += 1;
 

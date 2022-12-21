@@ -11,10 +11,10 @@
 //! An abstraction for reading resources.
 //!
 //! This accomplishes two purposes over just using the filesystem to locate shaders and so forth:
-//! 
+//!
 //! 1. Downstream users of Pathfinder shouldn't be burdened with having to install the resources
 //!    alongside their binary.
-//! 
+//!
 //! 2. There may not be a traditional filesystem available, as for example is the case on Android.
 
 use std::io::Error as IOError;

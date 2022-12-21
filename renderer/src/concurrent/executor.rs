@@ -18,7 +18,9 @@ pub trait Executor {
     /// (0..length).into_par_iter().map(builder).collect()
     /// ```
     fn build_vector<T, F>(&self, length: usize, builder: F) -> Vec<T>
-                          where T: Send, F: Fn(usize) -> T + Send + Sync;
+    where
+        T: Send,
+        F: Fn(usize) -> T + Send + Sync;
 }
 
 /// An executor that simply executes tasks sequentially in the same thread.
@@ -26,7 +28,10 @@ pub struct SequentialExecutor;
 
 impl Executor for SequentialExecutor {
     fn build_vector<T, F>(&self, length: usize, builder: F) -> Vec<T>
-                          where T: Send, F: Fn(usize) -> T + Send + Sync {
+    where
+        T: Send,
+        F: Fn(usize) -> T + Send + Sync,
+    {
         (0..length).into_iter().map(builder).collect()
     }
 }

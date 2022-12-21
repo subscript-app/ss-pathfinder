@@ -1,11 +1,11 @@
 //―――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――
 // INTERNAL IMPORTS
 //―――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――
-use io_surface::IOSurfaceRef;
 use foreign_types::ForeignTypeRef;
+use io_surface::IOSurfaceRef;
 
+use metal::{CAMetalLayer, CoreAnimationLayer, CoreAnimationLayerRef};
 use metal::{CoreAnimationDrawableRef, DeviceRef as NativeMetalDeviceRef};
-use metal::{CAMetalLayer, CoreAnimationLayerRef, CoreAnimationLayer};
 
 use ss_pathfinder_canvas::{Canvas, CanvasFontContext, Path2D};
 use ss_pathfinder_canvas::{CanvasRenderingContext2D, FillStyle, LineJoin};
@@ -13,23 +13,23 @@ use ss_pathfinder_canvas::{CanvasRenderingContext2D, FillStyle, LineJoin};
 use ss_pathfinder_color::ColorF;
 use ss_pathfinder_color::ColorU;
 
-use ss_pathfinder_geometry::vector::{vec2f, vec2i};
-use ss_pathfinder_geometry::vector::Vector2I;
-use ss_pathfinder_geometry::vector::{Vector2F, Vector4F};
 use ss_pathfinder_geometry::rect::{RectF, RectI};
 use ss_pathfinder_geometry::transform2d::Transform2F;
 use ss_pathfinder_geometry::transform3d::Transform4F;
+use ss_pathfinder_geometry::vector::Vector2I;
+use ss_pathfinder_geometry::vector::{vec2f, vec2i};
+use ss_pathfinder_geometry::vector::{Vector2F, Vector4F};
 
 use ss_pathfinder_renderer::concurrent::rayon::RayonExecutor;
 use ss_pathfinder_renderer::concurrent::scene_proxy::SceneProxy;
-use ss_pathfinder_renderer::options::BuildOptions;
+use ss_pathfinder_renderer::gpu::options::RendererLevel;
 use ss_pathfinder_renderer::gpu::options::{DestFramebuffer, RendererMode, RendererOptions};
 use ss_pathfinder_renderer::gpu::renderer::Renderer;
-use ss_pathfinder_renderer::gpu::options::RendererLevel;
+use ss_pathfinder_renderer::options::BuildOptions;
 
 use ss_pathfinder_resources::embedded::EmbeddedResourceLoader;
-use ss_pathfinder_resources::ResourceLoader;
 use ss_pathfinder_resources::fs::FilesystemResourceLoader;
+use ss_pathfinder_resources::ResourceLoader;
 
 use ss_pathfinder_metal::IntoMetalDevice;
 use ss_pathfinder_metal::MetalDevice;
@@ -47,21 +47,19 @@ use ss_pathfinder_renderer::options::RenderTransform;
 use ss_pathfinder_renderer::scene::Scene;
 use ss_pathfinder_simd::default::F32x4;
 
+use crate::data::basics::{DynDrawCmd, RenderingMode, StaticDrawCmd, ViewResolution};
+use crate::renderers::layer::VLayer;
+use crate::renderers::scene::{ShapeType, VScene, VShape};
 use std::ffi::CString;
 use std::os::raw::{c_char, c_void};
 use std::path::PathBuf;
 use std::ptr;
 use std::slice;
 use std::str;
-use crate::data::basics::{ViewResolution, RenderingMode, StaticDrawCmd, DynDrawCmd};
-use crate::renderers::scene::{VShape, VScene, ShapeType};
-use crate::renderers::layer::VLayer;
-
 
 //―――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――
 // DATA TYPES
 //―――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――
-
 
 pub struct DynVectorizer<const SN: usize = 1> {
     scenes: [VScene; SN],
@@ -69,7 +67,6 @@ pub struct DynVectorizer<const SN: usize = 1> {
     /// Use GPU compute-based renderer (default) or a hybrid CPU-GPU renderer.
     rendering_mode: RenderingMode,
 }
-
 
 pub struct DynVectorizerRef<'a, 'b, const SN: usize = 1, const LN: usize = 1> {
     pub scenes: &'a [VScene; SN],
@@ -81,43 +78,61 @@ pub struct DynVectorizerMut<'a, 'b, const SN: usize = 1, const LN: usize = 1> {
     pub(crate) layers: &'b mut [VLayer; LN],
 }
 
-
-
-
 //―――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――
 // MISCELLANEOUS
 //―――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――
 
 impl<const SN: usize> DynVectorizer<SN> {
-    pub fn get_scene(&self, ix: usize) -> Option<&VScene> { self.scenes.get(ix) }
-    pub const fn scenes(&self) -> &[VScene; SN] { &self.scenes }
+    pub fn get_scene(&self, ix: usize) -> Option<&VScene> {
+        self.scenes.get(ix)
+    }
+    pub const fn scenes(&self) -> &[VScene; SN] {
+        &self.scenes
+    }
 
-    pub fn scenes_mut(&mut self) -> &mut [VScene; SN] { &mut self.scenes }
+    pub fn scenes_mut(&mut self) -> &mut [VScene; SN] {
+        &mut self.scenes
+    }
 }
 
 impl DynVectorizer<1> {
-    pub const fn scene(&self) -> &VScene { &self.scenes[0] }
+    pub const fn scene(&self) -> &VScene {
+        &self.scenes[0]
+    }
 }
 impl DynVectorizer<2> {
-    pub const fn scene1(&self) -> &VScene { &self.scenes[0] }
-    pub const fn scene2(&self) -> &VScene { &self.scenes[1] }
+    pub const fn scene1(&self) -> &VScene {
+        &self.scenes[0]
+    }
+    pub const fn scene2(&self) -> &VScene {
+        &self.scenes[1]
+    }
 }
 impl DynVectorizer<3> {
-    pub const fn scene1(&self) -> &VScene { &self.scenes[0] }
-    pub const fn scene2(&self) -> &VScene { &self.scenes[1] }
-    pub const fn scene3(&self) -> &VScene { &self.scenes[2] }
+    pub const fn scene1(&self) -> &VScene {
+        &self.scenes[0]
+    }
+    pub const fn scene2(&self) -> &VScene {
+        &self.scenes[1]
+    }
+    pub const fn scene3(&self) -> &VScene {
+        &self.scenes[2]
+    }
 }
 impl DynVectorizer<4> {
-    pub const fn scene1(&self) -> &VScene { &self.scenes[0] }
-    pub const fn scene2(&self) -> &VScene { &self.scenes[1] }
-    pub const fn scene3(&self) -> &VScene { &self.scenes[2] }
-    pub const fn scene4(&self) -> &VScene { &self.scenes[3] }
+    pub const fn scene1(&self) -> &VScene {
+        &self.scenes[0]
+    }
+    pub const fn scene2(&self) -> &VScene {
+        &self.scenes[1]
+    }
+    pub const fn scene3(&self) -> &VScene {
+        &self.scenes[2]
+    }
+    pub const fn scene4(&self) -> &VScene {
+        &self.scenes[3]
+    }
 }
-
-
-
-
-
 
 //―――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――
 // INIT
@@ -154,7 +169,12 @@ impl Default for DynVectorizer<3> {
 impl Default for DynVectorizer<4> {
     fn default() -> Self {
         DynVectorizer {
-            scenes: [VScene::default(), VScene::default(), VScene::default(), VScene::default()],
+            scenes: [
+                VScene::default(),
+                VScene::default(),
+                VScene::default(),
+                VScene::default(),
+            ],
             layers: Vec::default(),
             rendering_mode: Default::default(),
         }
@@ -165,12 +185,9 @@ impl Default for DynVectorizer<4> {
 // UPDATE
 //―――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――
 
-
-
 //―――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――
 // DRAW - PUBLIC API
 //―――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――
-
 
 impl DynVectorizer<1> {
     pub fn draw(&mut self, draw_cmd: StaticDrawCmd<1>) {}
@@ -184,8 +201,6 @@ impl DynVectorizer<3> {
 impl DynVectorizer<4> {
     pub fn draw(&mut self, draw_cmd: StaticDrawCmd<4>) {}
 }
-
-
 
 //―――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――
 // DRAW - INTERNAL API
@@ -237,9 +252,6 @@ impl DynVectorizer<4> {
 //     }
 // }
 
-
 //―――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――
 // INTERNAL HELPERS
 //―――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――
-
-

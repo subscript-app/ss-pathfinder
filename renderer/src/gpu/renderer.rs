@@ -11,14 +11,16 @@
 //! The GPU renderer that processes commands necessary to render a scene.
 
 use crate::gpu::blend::{ToBlendState, ToCompositeCtrl};
-use crate::gpu::d3d9::renderer::RendererD3D9;
 use crate::gpu::d3d11::renderer::RendererD3D11;
+use crate::gpu::d3d9::renderer::RendererD3D9;
 use crate::gpu::debug::DebugUIPresenter;
 use crate::gpu::options::{DestFramebuffer, RendererLevel, RendererMode, RendererOptions};
 use crate::gpu::perf::{PendingTimer, RenderStats, RenderTime, TimeCategory, TimerQueryCache};
 use crate::gpu::shaders::{BlitProgram, BlitVertexArray, ClearProgram, ClearVertexArray};
 use crate::gpu::shaders::{ProgramsCore, ReprojectionProgram, ReprojectionVertexArray};
-use crate::gpu::shaders::{StencilProgram, StencilVertexArray, TileProgramCommon, VertexArraysCore};
+use crate::gpu::shaders::{
+    StencilProgram, StencilVertexArray, TileProgramCommon, VertexArraysCore,
+};
 use crate::gpu_data::{ColorCombineMode, RenderCommand, TextureLocation, TextureMetadataEntry};
 use crate::gpu_data::{TexturePageDescriptor, TexturePageId, TileBatchTexture};
 use crate::options::BoundingQuad;
@@ -30,12 +32,16 @@ use ss_pathfinder_content::render_target::RenderTargetId;
 use ss_pathfinder_geometry::rect::{RectF, RectI};
 use ss_pathfinder_geometry::transform3d::Transform4F;
 use ss_pathfinder_geometry::util;
-use ss_pathfinder_geometry::vector::{Vector2F, Vector2I, Vector4F, vec2f, vec2i};
+use ss_pathfinder_geometry::vector::{vec2f, vec2i, Vector2F, Vector2I, Vector4F};
 use ss_pathfinder_gpu::allocator::{BufferTag, FramebufferID, FramebufferTag, GeneralBufferID};
 use ss_pathfinder_gpu::allocator::{GPUMemoryAllocator, IndexBufferID, TextureID, TextureTag};
-use ss_pathfinder_gpu::{BufferData, BufferTarget, ClearOps, DepthFunc, DepthState, Device, Primitive};
+use ss_pathfinder_gpu::{
+    BufferData, BufferTarget, ClearOps, DepthFunc, DepthState, Device, Primitive,
+};
 use ss_pathfinder_gpu::{RenderOptions, RenderState, RenderTarget, StencilFunc, StencilState};
-use ss_pathfinder_gpu::{TextureBinding, TextureDataRef, TextureFormat, UniformBinding, UniformData};
+use ss_pathfinder_gpu::{
+    TextureBinding, TextureDataRef, TextureFormat, UniformBinding, UniformData,
+};
 use ss_pathfinder_resources::ResourceLoader;
 use ss_pathfinder_simd::default::{F32x2, F32x4, I32x2};
 use std::collections::VecDeque;
@@ -53,24 +59,27 @@ pub(crate) const MASK_TILES_DOWN: u32 = 256;
 const SQRT_2_PI_INV: f32 = 0.3989422804014327;
 
 const TEXTURE_METADATA_ENTRIES_PER_ROW: i32 = 128;
-const TEXTURE_METADATA_TEXTURE_WIDTH:   i32 = TEXTURE_METADATA_ENTRIES_PER_ROW * 10;
-const TEXTURE_METADATA_TEXTURE_HEIGHT:  i32 = 65536 / TEXTURE_METADATA_ENTRIES_PER_ROW;
+const TEXTURE_METADATA_TEXTURE_WIDTH: i32 = TEXTURE_METADATA_ENTRIES_PER_ROW * 10;
+const TEXTURE_METADATA_TEXTURE_HEIGHT: i32 = 65536 / TEXTURE_METADATA_ENTRIES_PER_ROW;
 
 // FIXME(pcwalton): Shrink this again!
-pub(crate) const MASK_FRAMEBUFFER_WIDTH:  i32 = TILE_WIDTH as i32      * MASK_TILES_ACROSS as i32;
+pub(crate) const MASK_FRAMEBUFFER_WIDTH: i32 = TILE_WIDTH as i32 * MASK_TILES_ACROSS as i32;
 pub(crate) const MASK_FRAMEBUFFER_HEIGHT: i32 = TILE_HEIGHT as i32 / 4 * MASK_TILES_DOWN as i32;
 
-const COMBINER_CTRL_FILTER_RADIAL_GRADIENT: i32 =   0x1;
-const COMBINER_CTRL_FILTER_TEXT: i32 =              0x2;
-const COMBINER_CTRL_FILTER_BLUR: i32 =              0x3;
-const COMBINER_CTRL_FILTER_COLOR_MATRIX: i32 =      0x4;
+const COMBINER_CTRL_FILTER_RADIAL_GRADIENT: i32 = 0x1;
+const COMBINER_CTRL_FILTER_TEXT: i32 = 0x2;
+const COMBINER_CTRL_FILTER_BLUR: i32 = 0x3;
+const COMBINER_CTRL_FILTER_COLOR_MATRIX: i32 = 0x4;
 
-const COMBINER_CTRL_COLOR_FILTER_SHIFT: i32 =       4;
-const COMBINER_CTRL_COLOR_COMBINE_SHIFT: i32 =      8;
-const COMBINER_CTRL_COMPOSITE_SHIFT: i32 =         10;
+const COMBINER_CTRL_COLOR_FILTER_SHIFT: i32 = 4;
+const COMBINER_CTRL_COLOR_COMBINE_SHIFT: i32 = 8;
+const COMBINER_CTRL_COMPOSITE_SHIFT: i32 = 10;
 
 /// The GPU renderer that processes commands necessary to render a scene.
-pub struct Renderer<D> where D: Device {
+pub struct Renderer<D>
+where
+    D: Device,
+{
     // Basic data
     pub(crate) core: RendererCore<D>,
     level_impl: RendererLevelImpl<D>,
@@ -92,12 +101,18 @@ pub struct Renderer<D> where D: Device {
     last_rendering_time: Option<RenderTime>,
 }
 
-enum RendererLevelImpl<D> where D: Device {
+enum RendererLevelImpl<D>
+where
+    D: Device,
+{
     D3D9(RendererD3D9<D>),
     D3D11(RendererD3D11<D>),
 }
 
-pub(crate) struct RendererCore<D> where D: Device {
+pub(crate) struct RendererCore<D>
+where
+    D: Device,
+{
     // Basic data
     pub(crate) device: D,
     pub(crate) allocator: GPUMemoryAllocator<D>,
@@ -135,7 +150,10 @@ pub(crate) struct RendererCore<D> where D: Device {
 }
 
 // TODO(pcwalton): Remove this.
-struct Frame<D> where D: Device {
+struct Frame<D>
+where
+    D: Device,
+{
     blit_vertex_array: BlitVertexArray<D>,
     clear_vertex_array: ClearVertexArray<D>,
     stencil_vertex_array: StencilVertexArray<D>,
@@ -147,29 +165,32 @@ pub(crate) struct MaskStorage {
     pub(crate) allocated_page_count: u32,
 }
 
-impl<D> Renderer<D> where D: Device {
+impl<D> Renderer<D>
+where
+    D: Device,
+{
     /// Creates a new renderer ready to render Pathfinder content.
-    /// 
+    ///
     /// Arguments:
-    /// 
+    ///
     /// * `device`: The GPU device to render with. This effectively specifies the system GPU API
     ///   Pathfinder will use (OpenGL, Metal, etc.)
-    /// 
+    ///
     /// * `resources`: Where Pathfinder should find shaders, lookup tables, and other data.
     ///   This is typically either an `EmbeddedResourceLoader` to use resources included in the
     ///   Pathfinder library or (less commonly) a `FilesystemResourceLoader` to use resources
     ///   stored in a directory on disk.
-    /// 
+    ///
     /// * `mode`: Renderer options that can't be changed after the renderer is created. Most
     ///   notably, this specifies the API level (D3D9 or D3D11).
-    /// 
+    ///
     /// * `options`: Renderer options that can be changed after the renderer is created. Most
     ///   importantly, this specifies where the output should go (to a window or off-screen).
     pub fn new(
         device: D,
         resources: &dyn ResourceLoader,
         mode: RendererMode,
-        options: RendererOptions<D>
+        options: RendererOptions<D>,
     ) -> Renderer<D> {
         let mut allocator = GPUMemoryAllocator::new();
 
@@ -178,49 +199,49 @@ impl<D> Renderer<D> where D: Device {
         let quad_vertex_positions_buffer_id = allocator.allocate_general_buffer::<u16>(
             &device,
             QUAD_VERTEX_POSITIONS.len() as u64,
-            BufferTag("QuadVertexPositions")
+            BufferTag("QuadVertexPositions"),
         );
         device.upload_to_buffer(
             allocator.get_general_buffer(quad_vertex_positions_buffer_id),
             0,
             &QUAD_VERTEX_POSITIONS,
-            BufferTarget::Vertex
+            BufferTarget::Vertex,
         );
         let quad_vertex_indices_buffer_id = allocator.allocate_index_buffer::<u32>(
             &device,
             QUAD_VERTEX_INDICES.len() as u64,
-            BufferTag("QuadVertexIndices")
+            BufferTag("QuadVertexIndices"),
         );
         device.upload_to_buffer(
             allocator.get_index_buffer(quad_vertex_indices_buffer_id),
             0,
             &QUAD_VERTEX_INDICES,
-            BufferTarget::Index
+            BufferTarget::Index,
         );
 
         let area_lut_texture_id = allocator.allocate_texture(
             &device,
             Vector2I::splat(256),
             TextureFormat::RGBA8,
-            TextureTag("AreaLUT")
+            TextureTag("AreaLUT"),
         );
         let gamma_lut_texture_id = allocator.allocate_texture(
             &device,
             vec2i(256, 8),
             TextureFormat::R8,
-            TextureTag("GammaLUT")
+            TextureTag("GammaLUT"),
         );
         device.upload_png_to_texture(
             resources,
             "area-lut",
             allocator.get_texture(area_lut_texture_id),
-            TextureFormat::RGBA8
+            TextureFormat::RGBA8,
         );
         device.upload_png_to_texture(
             resources,
             "gamma-lut",
             allocator.get_texture(gamma_lut_texture_id),
-            TextureFormat::R8
+            TextureFormat::R8,
         );
 
         let window_size = options.dest.window_size(&device);
@@ -228,18 +249,18 @@ impl<D> Renderer<D> where D: Device {
             &device,
             window_size,
             TextureFormat::RGBA8,
-            FramebufferTag("IntermediateDest")
+            FramebufferTag("IntermediateDest"),
         );
 
         let texture_metadata_texture_size = vec2i(
             TEXTURE_METADATA_TEXTURE_WIDTH,
-            TEXTURE_METADATA_TEXTURE_HEIGHT
+            TEXTURE_METADATA_TEXTURE_HEIGHT,
         );
         let texture_metadata_texture_id = allocator.allocate_texture(
             &device,
             texture_metadata_texture_size,
             TextureFormat::RGBA16F,
-            TextureTag("TextureMetadata")
+            TextureTag("TextureMetadata"),
         );
 
         let core_programs = ProgramsCore::new(&device, resources);
@@ -247,7 +268,7 @@ impl<D> Renderer<D> where D: Device {
             &device,
             &core_programs,
             allocator.get_general_buffer(quad_vertex_positions_buffer_id),
-            allocator.get_index_buffer(quad_vertex_indices_buffer_id)
+            allocator.get_index_buffer(quad_vertex_indices_buffer_id),
         );
 
         let mut core = RendererCore {
@@ -281,9 +302,7 @@ impl<D> Renderer<D> where D: Device {
         };
 
         let level_impl = match core.mode.level {
-            RendererLevel::D3D9 => {
-                RendererLevelImpl::D3D9(RendererD3D9::new(&mut core, resources))
-            }
+            RendererLevel::D3D9 => RendererLevelImpl::D3D9(RendererD3D9::new(&mut core, resources)),
             RendererLevel::D3D11 => {
                 RendererLevelImpl::D3D11(RendererD3D11::new(&mut core, resources))
             }
@@ -295,7 +314,12 @@ impl<D> Renderer<D> where D: Device {
         let reprojection_program = ReprojectionProgram::new(&core.device, resources);
 
         let debug_ui_presenter = if core.options.show_debug_ui {
-            Some(DebugUIPresenter::new(&core.device, resources, window_size, core.mode.level))
+            Some(DebugUIPresenter::new(
+                &core.device,
+                resources,
+                window_size,
+                core.mode.level,
+            ))
         } else {
             None
         };
@@ -308,7 +332,7 @@ impl<D> Renderer<D> where D: Device {
             &reprojection_program,
             &stencil_program,
             quad_vertex_positions_buffer_id,
-            quad_vertex_indices_buffer_id
+            quad_vertex_indices_buffer_id,
         );
 
         core.device.end_commands();
@@ -339,7 +363,7 @@ impl<D> Renderer<D> where D: Device {
     }
 
     /// Performs work necessary to begin rendering a scene.
-    /// 
+    ///
     /// This must be called before `render_command()`.
     pub fn begin_scene(&mut self) {
         self.core.framebuffer_flags = FramebufferFlags::empty();
@@ -352,64 +376,78 @@ impl<D> Renderer<D> where D: Device {
     }
 
     /// Issues a rendering command to the renderer.
-    /// 
+    ///
     /// These commands are generated from methods like `Scene::build()`.
-    /// 
+    ///
     /// `begin_scene()` must have been called first.
     pub fn render_command(&mut self, command: &RenderCommand) {
         debug!("render command: {:?}", command);
         match *command {
-            RenderCommand::Start { bounding_quad, path_count, needs_readable_framebuffer } => {
+            RenderCommand::Start {
+                bounding_quad,
+                path_count,
+                needs_readable_framebuffer,
+            } => {
                 self.start_rendering(bounding_quad, path_count, needs_readable_framebuffer);
             }
-            RenderCommand::AllocateTexturePage { page_id, ref descriptor } => {
-                self.allocate_pattern_texture_page(page_id, descriptor)
-            }
-            RenderCommand::UploadTexelData { ref texels, location } => {
-                self.upload_texel_data(texels, location)
-            }
+            RenderCommand::AllocateTexturePage {
+                page_id,
+                ref descriptor,
+            } => self.allocate_pattern_texture_page(page_id, descriptor),
+            RenderCommand::UploadTexelData {
+                ref texels,
+                location,
+            } => self.upload_texel_data(texels, location),
             RenderCommand::DeclareRenderTarget { id, location } => {
                 self.declare_render_target(id, location)
             }
             RenderCommand::UploadTextureMetadata(ref metadata) => {
                 self.upload_texture_metadata(metadata);
             }
-            RenderCommand::AddFillsD3D9(ref fills) => {
-                self.level_impl.require_d3d9().add_fills(&mut self.core, fills)
-            }
+            RenderCommand::AddFillsD3D9(ref fills) => self
+                .level_impl
+                .require_d3d9()
+                .add_fills(&mut self.core, fills),
             RenderCommand::FlushFillsD3D9 => {
-                self.level_impl.require_d3d9().draw_buffered_fills(&mut self.core);
-            }
-            RenderCommand::UploadSceneD3D11 { ref draw_segments, ref clip_segments } => {
                 self.level_impl
-                    .require_d3d11()
-                    .upload_scene(&mut self.core, draw_segments, clip_segments)
+                    .require_d3d9()
+                    .draw_buffered_fills(&mut self.core);
             }
+            RenderCommand::UploadSceneD3D11 {
+                ref draw_segments,
+                ref clip_segments,
+            } => self.level_impl.require_d3d11().upload_scene(
+                &mut self.core,
+                draw_segments,
+                clip_segments,
+            ),
             RenderCommand::PushRenderTarget(render_target_id) => {
                 self.push_render_target(render_target_id)
             }
             RenderCommand::PopRenderTarget => self.pop_render_target(),
-            RenderCommand::PrepareClipTilesD3D11(ref batch) => {
-                self.level_impl.require_d3d11().prepare_tiles(&mut self.core, batch)
-            }
-            RenderCommand::DrawTilesD3D9(ref batch) => {
-                self.level_impl.require_d3d9().upload_and_draw_tiles(&mut self.core, batch)
-            }
-            RenderCommand::DrawTilesD3D11(ref batch) => {
-                self.level_impl.require_d3d11().prepare_and_draw_tiles(&mut self.core, batch)
-            }
+            RenderCommand::PrepareClipTilesD3D11(ref batch) => self
+                .level_impl
+                .require_d3d11()
+                .prepare_tiles(&mut self.core, batch),
+            RenderCommand::DrawTilesD3D9(ref batch) => self
+                .level_impl
+                .require_d3d9()
+                .upload_and_draw_tiles(&mut self.core, batch),
+            RenderCommand::DrawTilesD3D11(ref batch) => self
+                .level_impl
+                .require_d3d11()
+                .prepare_and_draw_tiles(&mut self.core, batch),
             RenderCommand::Finish { cpu_build_time } => {
                 self.core.stats.cpu_build_time = cpu_build_time;
             }
         }
-
     }
 
     /// Finishes rendering a scene.
-    /// 
+    ///
     /// `begin_scene()` and all `render_command()` calls must have been issued before calling this
     /// method.
-    /// 
+    ///
     /// Note that, after calling this method, you might need to flush the output to the screen via
     /// `swap_buffers()`, `present()`, or a similar method that your windowing library offers.
     pub fn end_scene(&mut self) {
@@ -445,7 +483,7 @@ impl<D> Renderer<D> where D: Device {
         &mut self,
         bounding_quad: BoundingQuad,
         path_count: usize,
-        needs_readable_framebuffer: bool
+        needs_readable_framebuffer: bool,
     ) {
         match (&self.core.options.dest, self.core.mode.level) {
             (&DestFramebuffer::Other(_), _) => {
@@ -459,10 +497,10 @@ impl<D> Renderer<D> where D: Device {
                     .insert(RendererFlags::INTERMEDIATE_DEST_FRAMEBUFFER_NEEDED);
             }
             _ => {
-                self.core
-                    .renderer_flags
-                    .set(RendererFlags::INTERMEDIATE_DEST_FRAMEBUFFER_NEEDED,
-                         needs_readable_framebuffer);
+                self.core.renderer_flags.set(
+                    RendererFlags::INTERMEDIATE_DEST_FRAMEBUFFER_NEEDED,
+                    needs_readable_framebuffer,
+                );
             }
         }
 
@@ -470,12 +508,9 @@ impl<D> Renderer<D> where D: Device {
             self.draw_stencil(&bounding_quad);
         }
 
-
         self.core.stats.path_count = path_count;
-        
 
         self.core.render_targets.clear();
-
     }
 
     fn update_debug_ui(&mut self) {
@@ -522,7 +557,7 @@ impl<D> Renderer<D> where D: Device {
     }
 
     /// Returns a reference to the GPU device.
-    /// 
+    ///
     /// This can be useful to issue GPU commands manually via the low-level `pathfinder_gpu`
     /// abstraction. (Of course, you can also use your platform API such as OpenGL directly
     /// alongside Pathfinder.)
@@ -532,7 +567,7 @@ impl<D> Renderer<D> where D: Device {
     }
 
     /// Returns a mutable reference to the GPU device.
-    /// 
+    ///
     /// This can be useful to issue GPU commands manually via the low-level `pathfinder_gpu`
     /// abstraction. (Of course, you can also use your platform API such as OpenGL directly
     /// alongside Pathfinder.)
@@ -554,10 +589,10 @@ impl<D> Renderer<D> where D: Device {
     }
 
     /// Returns a mutable reference to the current rendering options, allowing them to be changed.
-    /// 
+    ///
     /// Among other things, you can use this function to change the destination of rendering
     /// output without having to recreate the renderer.
-    /// 
+    ///
     /// After changing the destination framebuffer size, you must call
     /// `dest_framebuffer_size_changed()`.
     pub fn options_mut(&mut self) -> &mut RendererOptions<D> {
@@ -565,26 +600,31 @@ impl<D> Renderer<D> where D: Device {
     }
 
     /// Notifies Pathfinder that the size of the output framebuffer has changed.
-    /// 
+    ///
     /// You must call this function after changing the `dest_framebuffer` member of
     /// `RendererOptions` to a target with a different size.
     #[inline]
     pub fn dest_framebuffer_size_changed(&mut self) {
         let new_framebuffer_size = self.core.main_viewport().size();
         if let Some(ref mut debug_ui_presenter) = self.debug_ui_presenter {
-            debug_ui_presenter.ui_presenter.set_framebuffer_size(new_framebuffer_size);
+            debug_ui_presenter
+                .ui_presenter
+                .set_framebuffer_size(new_framebuffer_size);
         }
     }
 
     /// Returns a mutable reference to the debug UI.
-    /// 
+    ///
     /// You can use this function to draw custom debug widgets on screen, as the demo does.
     #[inline]
     pub fn debug_ui_presenter_mut(&mut self) -> DebugUIPresenterInfo<D> {
         DebugUIPresenterInfo {
             device: &mut self.core.device,
             allocator: &mut self.core.allocator,
-            debug_ui_presenter: self.debug_ui_presenter.as_mut().expect("Debug UI disabled!"),
+            debug_ui_presenter: self
+                .debug_ui_presenter
+                .as_mut()
+                .expect("Debug UI disabled!"),
         }
     }
 
@@ -609,25 +649,31 @@ impl<D> Renderer<D> where D: Device {
     }
 
     /// Returns a GPU-side vertex buffer containing 2D vertices of a unit square.
-    /// 
+    ///
     /// This can be handy for custom rendering.
     #[inline]
     pub fn quad_vertex_positions_buffer(&self) -> &D::Buffer {
-        self.core.allocator.get_general_buffer(self.core.quad_vertex_positions_buffer_id)
+        self.core
+            .allocator
+            .get_general_buffer(self.core.quad_vertex_positions_buffer_id)
     }
 
     /// Returns a GPU-side 32-bit unsigned index buffer of triangles necessary to render a quad
     /// with the buffer returned by `quad_vertex_positions_buffer()`.
-    /// 
+    ///
     /// This can be handy for custom rendering.
     #[inline]
     pub fn quad_vertex_indices_buffer(&self) -> &D::Buffer {
-        self.core.allocator.get_index_buffer(self.core.quad_vertex_indices_buffer_id)
+        self.core
+            .allocator
+            .get_index_buffer(self.core.quad_vertex_indices_buffer_id)
     }
 
-    fn allocate_pattern_texture_page(&mut self,
-                                     page_id: TexturePageId,
-                                     descriptor: &TexturePageDescriptor) {
+    fn allocate_pattern_texture_page(
+        &mut self,
+        page_id: TexturePageId,
+        descriptor: &TexturePageDescriptor,
+    ) {
         // Fill in IDs up to the requested page ID.
         let page_index = page_id.0 as usize;
         while self.core.pattern_texture_pages.len() < page_index + 1 {
@@ -636,17 +682,19 @@ impl<D> Renderer<D> where D: Device {
 
         // Clear out any existing texture.
         if let Some(old_texture_page) = self.core.pattern_texture_pages[page_index].take() {
-            self.core.allocator.free_framebuffer(old_texture_page.framebuffer_id);
+            self.core
+                .allocator
+                .free_framebuffer(old_texture_page.framebuffer_id);
         }
 
         // Allocate texture.
         let texture_size = descriptor.size;
-        let framebuffer_id = self.core
-                                 .allocator
-                                 .allocate_framebuffer(&self.core.device,
-                                                       texture_size,
-                                                       TextureFormat::RGBA8,
-                                                       FramebufferTag("PatternPage"));
+        let framebuffer_id = self.core.allocator.allocate_framebuffer(
+            &self.core.device,
+            texture_size,
+            TextureFormat::RGBA8,
+            FramebufferTag("PatternPage"),
+        );
         self.core.pattern_texture_pages[page_index] = Some(PatternTexturePage {
             framebuffer_id,
             must_preserve_contents: false,
@@ -654,24 +702,30 @@ impl<D> Renderer<D> where D: Device {
     }
 
     fn upload_texel_data(&mut self, texels: &[ColorU], location: TextureLocation) {
-        let texture_page = self.core
-                               .pattern_texture_pages[location.page.0 as usize]
-                               .as_mut()
-                               .expect("Texture page not allocated yet!");
+        let texture_page = self.core.pattern_texture_pages[location.page.0 as usize]
+            .as_mut()
+            .expect("Texture page not allocated yet!");
         let framebuffer_id = texture_page.framebuffer_id;
         let framebuffer = self.core.allocator.get_framebuffer(framebuffer_id);
         let texture = self.core.device.framebuffer_texture(framebuffer);
         let texels = color::color_slice_to_u8_slice(texels);
-        self.core.device.upload_to_texture(texture, location.rect, TextureDataRef::U8(texels));
+        self.core
+            .device
+            .upload_to_texture(texture, location.rect, TextureDataRef::U8(texels));
         texture_page.must_preserve_contents = true;
     }
 
-    fn declare_render_target(&mut self,
-                             render_target_id: RenderTargetId,
-                             location: TextureLocation) {
+    fn declare_render_target(
+        &mut self,
+        render_target_id: RenderTargetId,
+        location: TextureLocation,
+    ) {
         while self.core.render_targets.len() < render_target_id.render_target as usize + 1 {
             self.core.render_targets.push(RenderTargetInfo {
-                location: TextureLocation { page: TexturePageId(!0), rect: RectI::default() },
+                location: TextureLocation {
+                    page: TexturePageId(!0),
+                    rect: RectI::default(),
+                },
             });
         }
         let mut render_target =
@@ -693,9 +747,11 @@ impl<D> Renderer<D> where D: Device {
         let mut texels = Vec::with_capacity(padded_texel_size);
         for entry in metadata {
             let base_color = entry.base_color.to_f32();
-            let filter_params = self.compute_filter_params(&entry.filter,
-                                                           entry.blend_mode,
-                                                           entry.color_0_combine_mode);
+            let filter_params = self.compute_filter_params(
+                &entry.filter,
+                entry.blend_mode,
+                entry.color_0_combine_mode,
+            );
             texels.extend_from_slice(&[
                 // 0
                 f16::from_f32(entry.color_0_transform.m11()),
@@ -753,20 +809,23 @@ impl<D> Renderer<D> where D: Device {
             texels.push(f16::default())
         }
 
-        
         let texture_id = self.core.texture_metadata_texture_id;
         let texture = self.core.allocator.get_texture(texture_id);
         let width = TEXTURE_METADATA_TEXTURE_WIDTH;
         let height = texels.len() as i32 / (4 * TEXTURE_METADATA_TEXTURE_WIDTH);
         let rect = RectI::new(Vector2I::zero(), Vector2I::new(width, height));
 
-        self.core.device.upload_to_texture(texture, rect, TextureDataRef::F16(&texels));
+        self.core
+            .device
+            .upload_to_texture(texture, rect, TextureDataRef::F16(&texels));
     }
 
     fn draw_stencil(&mut self, quad_positions: &[Vector4F]) {
-        self.core.device.allocate_buffer(&self.frame.stencil_vertex_array.vertex_buffer,
-                                         BufferData::Memory(quad_positions),
-                                         BufferTarget::Vertex);
+        self.core.device.allocate_buffer(
+            &self.frame.stencil_vertex_array.vertex_buffer,
+            BufferData::Memory(quad_positions),
+            BufferTarget::Vertex,
+        );
 
         // Create indices for a triangle fan. (This is OK because the clipped quad should always be
         // convex.)
@@ -774,70 +833,95 @@ impl<D> Renderer<D> where D: Device {
         for index in 1..(quad_positions.len() as u32 - 1) {
             indices.extend_from_slice(&[0, index as u32, index + 1]);
         }
-        self.core.device.allocate_buffer(&self.frame.stencil_vertex_array.index_buffer,
-                                    BufferData::Memory(&indices),
-                                    BufferTarget::Index);
+        self.core.device.allocate_buffer(
+            &self.frame.stencil_vertex_array.index_buffer,
+            BufferData::Memory(&indices),
+            BufferTarget::Index,
+        );
 
-        self.core.device.draw_elements(indices.len() as u32, &RenderState {
-            target: &self.core.draw_render_target(),
-            program: &self.stencil_program.program,
-            vertex_array: &self.frame.stencil_vertex_array.vertex_array,
-            primitive: Primitive::Triangles,
-            textures: &[],
-            images: &[],
-            storage_buffers: &[],
-            uniforms: &[],
-            viewport: self.core.draw_viewport(),
-            options: RenderOptions {
-                // FIXME(pcwalton): Should we really write to the depth buffer?
-                depth: Some(DepthState { func: DepthFunc::Less, write: true }),
-                stencil: Some(StencilState {
-                    func: StencilFunc::Always,
-                    reference: 1,
-                    mask: 1,
-                    write: true,
-                }),
-                color_mask: false,
-                clear_ops: ClearOps { stencil: Some(0), ..ClearOps::default() },
-                ..RenderOptions::default()
+        self.core.device.draw_elements(
+            indices.len() as u32,
+            &RenderState {
+                target: &self.core.draw_render_target(),
+                program: &self.stencil_program.program,
+                vertex_array: &self.frame.stencil_vertex_array.vertex_array,
+                primitive: Primitive::Triangles,
+                textures: &[],
+                images: &[],
+                storage_buffers: &[],
+                uniforms: &[],
+                viewport: self.core.draw_viewport(),
+                options: RenderOptions {
+                    // FIXME(pcwalton): Should we really write to the depth buffer?
+                    depth: Some(DepthState {
+                        func: DepthFunc::Less,
+                        write: true,
+                    }),
+                    stencil: Some(StencilState {
+                        func: StencilFunc::Always,
+                        reference: 1,
+                        mask: 1,
+                        write: true,
+                    }),
+                    color_mask: false,
+                    clear_ops: ClearOps {
+                        stencil: Some(0),
+                        ..ClearOps::default()
+                    },
+                    ..RenderOptions::default()
+                },
             },
-        });
+        );
 
         self.core.stats.drawcall_count += 1;
     }
 
-
     /// Draws a texture that was originally drawn with `old_transform` with `new_transform` by
     /// transforming in screen space.
     #[deprecated]
-    pub fn reproject_texture(&mut self,
-                             texture: &D::Texture,
-                             old_transform: &Transform4F,
-                             new_transform: &Transform4F) {
+    pub fn reproject_texture(
+        &mut self,
+        texture: &D::Texture,
+        old_transform: &Transform4F,
+        new_transform: &Transform4F,
+    ) {
         let clear_color = self.core.clear_color_for_draw_operation();
 
-        self.core.device.draw_elements(6, &RenderState {
-            target: &self.core.draw_render_target(),
-            program: &self.reprojection_program.program,
-            vertex_array: &self.frame.reprojection_vertex_array.vertex_array,
-            primitive: Primitive::Triangles,
-            textures: &[(&self.reprojection_program.texture, texture)],
-            images: &[],
-            storage_buffers: &[],
-            uniforms: &[
-                (&self.reprojection_program.old_transform_uniform,
-                 UniformData::from_transform_3d(old_transform)),
-                (&self.reprojection_program.new_transform_uniform,
-                 UniformData::from_transform_3d(new_transform)),
-            ],
-            viewport: self.core.draw_viewport(),
-            options: RenderOptions {
-                blend: BlendMode::SrcOver.to_blend_state(),
-                depth: Some(DepthState { func: DepthFunc::Less, write: false, }),
-                clear_ops: ClearOps { color: clear_color, ..ClearOps::default() },
-                ..RenderOptions::default()
+        self.core.device.draw_elements(
+            6,
+            &RenderState {
+                target: &self.core.draw_render_target(),
+                program: &self.reprojection_program.program,
+                vertex_array: &self.frame.reprojection_vertex_array.vertex_array,
+                primitive: Primitive::Triangles,
+                textures: &[(&self.reprojection_program.texture, texture)],
+                images: &[],
+                storage_buffers: &[],
+                uniforms: &[
+                    (
+                        &self.reprojection_program.old_transform_uniform,
+                        UniformData::from_transform_3d(old_transform),
+                    ),
+                    (
+                        &self.reprojection_program.new_transform_uniform,
+                        UniformData::from_transform_3d(new_transform),
+                    ),
+                ],
+                viewport: self.core.draw_viewport(),
+                options: RenderOptions {
+                    blend: BlendMode::SrcOver.to_blend_state(),
+                    depth: Some(DepthState {
+                        func: DepthFunc::Less,
+                        write: false,
+                    }),
+                    clear_ops: ClearOps {
+                        color: clear_color,
+                        ..ClearOps::default()
+                    },
+                    ..RenderOptions::default()
+                },
             },
-        });
+        );
 
         self.core.stats.drawcall_count += 1;
 
@@ -849,7 +933,10 @@ impl<D> Renderer<D> where D: Device {
     }
 
     fn pop_render_target(&mut self) {
-        self.core.render_target_stack.pop().expect("Render target stack underflow!");
+        self.core
+            .render_target_stack
+            .pop()
+            .expect("Render target stack underflow!");
     }
 
     fn clear_dest_framebuffer_if_necessary(&mut self) {
@@ -858,84 +945,117 @@ impl<D> Renderer<D> where D: Device {
             Some(background_color) => background_color,
         };
 
-        if self.core.framebuffer_flags.contains(FramebufferFlags::DEST_FRAMEBUFFER_IS_DIRTY) {
+        if self
+            .core
+            .framebuffer_flags
+            .contains(FramebufferFlags::DEST_FRAMEBUFFER_IS_DIRTY)
+        {
             return;
         }
 
         let main_viewport = self.core.main_viewport();
         let uniforms = [
-            (&self.clear_program.rect_uniform, UniformData::Vec4(main_viewport.to_f32().0)),
-            (&self.clear_program.framebuffer_size_uniform,
-             UniformData::Vec2(main_viewport.size().to_f32().0)),
-            (&self.clear_program.color_uniform, UniformData::Vec4(background_color.0)),
+            (
+                &self.clear_program.rect_uniform,
+                UniformData::Vec4(main_viewport.to_f32().0),
+            ),
+            (
+                &self.clear_program.framebuffer_size_uniform,
+                UniformData::Vec2(main_viewport.size().to_f32().0),
+            ),
+            (
+                &self.clear_program.color_uniform,
+                UniformData::Vec4(background_color.0),
+            ),
         ];
 
-        self.core.device.draw_elements(6, &RenderState {
-            target: &RenderTarget::Default,
-            program: &self.clear_program.program,
-            vertex_array: &self.frame.clear_vertex_array.vertex_array,
-            primitive: Primitive::Triangles,
-            textures: &[],
-            images: &[],
-            storage_buffers: &[],
-            uniforms: &uniforms[..],
-            viewport: main_viewport,
-            options: RenderOptions::default(),
-        });
+        self.core.device.draw_elements(
+            6,
+            &RenderState {
+                target: &RenderTarget::Default,
+                program: &self.clear_program.program,
+                vertex_array: &self.frame.clear_vertex_array.vertex_array,
+                primitive: Primitive::Triangles,
+                textures: &[],
+                images: &[],
+                storage_buffers: &[],
+                uniforms: &uniforms[..],
+                viewport: main_viewport,
+                options: RenderOptions::default(),
+            },
+        );
 
         self.core.stats.drawcall_count += 1;
     }
 
     fn blit_intermediate_dest_framebuffer_if_necessary(&mut self) {
-        if !self.core
-                .renderer_flags
-                .contains(RendererFlags::INTERMEDIATE_DEST_FRAMEBUFFER_NEEDED) {
+        if !self
+            .core
+            .renderer_flags
+            .contains(RendererFlags::INTERMEDIATE_DEST_FRAMEBUFFER_NEEDED)
+        {
             return;
         }
 
         let main_viewport = self.core.main_viewport();
 
         if self.core.intermediate_dest_framebuffer_size != main_viewport.size() {
-            self.core.allocator.free_framebuffer(self.core.intermediate_dest_framebuffer_id);
-            self.core.intermediate_dest_framebuffer_id =
-                self.core.allocator.allocate_framebuffer(&self.core.device,
-                                                         main_viewport.size(),
-                                                         TextureFormat::RGBA8,
-                                                         FramebufferTag("IntermediateDest"));
+            self.core
+                .allocator
+                .free_framebuffer(self.core.intermediate_dest_framebuffer_id);
+            self.core.intermediate_dest_framebuffer_id = self.core.allocator.allocate_framebuffer(
+                &self.core.device,
+                main_viewport.size(),
+                TextureFormat::RGBA8,
+                FramebufferTag("IntermediateDest"),
+            );
             self.core.intermediate_dest_framebuffer_size = main_viewport.size();
         }
 
-        let intermediate_dest_framebuffer =
-            self.core.allocator.get_framebuffer(self.core.intermediate_dest_framebuffer_id);
+        let intermediate_dest_framebuffer = self
+            .core
+            .allocator
+            .get_framebuffer(self.core.intermediate_dest_framebuffer_id);
 
-        let textures = [
-            (&self.blit_program.src_texture,
-             self.core.device.framebuffer_texture(intermediate_dest_framebuffer))
-        ];
+        let textures = [(
+            &self.blit_program.src_texture,
+            self.core
+                .device
+                .framebuffer_texture(intermediate_dest_framebuffer),
+        )];
 
-        self.core.device.draw_elements(6, &RenderState {
-            target: &RenderTarget::Default,
-            program: &self.blit_program.program,
-            vertex_array: &self.frame.blit_vertex_array.vertex_array,
-            primitive: Primitive::Triangles,
-            textures: &textures[..],
-            images: &[],
-            storage_buffers: &[],
-            uniforms: &[
-                (&self.blit_program.framebuffer_size_uniform,
-                 UniformData::Vec2(main_viewport.size().to_f32().0)),
-                (&self.blit_program.dest_rect_uniform,
-                 UniformData::Vec4(RectF::new(Vector2F::zero(), main_viewport.size().to_f32()).0)),
-            ],
-            viewport: main_viewport,
-            options: RenderOptions {
-                clear_ops: ClearOps {
-                    color: Some(ColorF::new(0.0, 0.0, 0.0, 1.0)),
-                    ..ClearOps::default()
+        self.core.device.draw_elements(
+            6,
+            &RenderState {
+                target: &RenderTarget::Default,
+                program: &self.blit_program.program,
+                vertex_array: &self.frame.blit_vertex_array.vertex_array,
+                primitive: Primitive::Triangles,
+                textures: &textures[..],
+                images: &[],
+                storage_buffers: &[],
+                uniforms: &[
+                    (
+                        &self.blit_program.framebuffer_size_uniform,
+                        UniformData::Vec2(main_viewport.size().to_f32().0),
+                    ),
+                    (
+                        &self.blit_program.dest_rect_uniform,
+                        UniformData::Vec4(
+                            RectF::new(Vector2F::zero(), main_viewport.size().to_f32()).0,
+                        ),
+                    ),
+                ],
+                viewport: main_viewport,
+                options: RenderOptions {
+                    clear_ops: ClearOps {
+                        color: Some(ColorF::new(0.0, 0.0, 0.0, 1.0)),
+                        ..ClearOps::default()
+                    },
+                    ..RenderOptions::default()
                 },
-                ..RenderOptions::default()
             },
-        });
+        );
 
         self.core.stats.drawcall_count += 1;
     }
@@ -953,27 +1073,30 @@ impl<D> Renderer<D> where D: Device {
         self.core.draw_render_target()
     }
 
-    fn compute_filter_params(&self,
-                             filter: &Filter,
-                             blend_mode: BlendMode,
-                             color_0_combine_mode: ColorCombineMode)
-                             -> FilterParams {
+    fn compute_filter_params(
+        &self,
+        filter: &Filter,
+        blend_mode: BlendMode,
+        color_0_combine_mode: ColorCombineMode,
+    ) -> FilterParams {
         let mut ctrl = 0;
         ctrl |= blend_mode.to_composite_ctrl() << COMBINER_CTRL_COMPOSITE_SHIFT;
         ctrl |= color_0_combine_mode.to_composite_ctrl() << COMBINER_CTRL_COLOR_COMBINE_SHIFT;
 
         match *filter {
-            Filter::RadialGradient { line, radii, uv_origin } => {
-                FilterParams {
-                    p0: line.from().0.concat_xy_xy(line.vector().0),
-                    p1: radii.concat_xy_xy(uv_origin.0),
-                    p2: F32x4::default(),
-                    p3: F32x4::default(),
-                    p4: F32x4::default(),
-                    ctrl: ctrl | (COMBINER_CTRL_FILTER_RADIAL_GRADIENT <<
-                                  COMBINER_CTRL_COLOR_FILTER_SHIFT)
-                }
-            }
+            Filter::RadialGradient {
+                line,
+                radii,
+                uv_origin,
+            } => FilterParams {
+                p0: line.from().0.concat_xy_xy(line.vector().0),
+                p1: radii.concat_xy_xy(uv_origin.0),
+                p2: F32x4::default(),
+                p3: F32x4::default(),
+                p4: F32x4::default(),
+                ctrl: ctrl
+                    | (COMBINER_CTRL_FILTER_RADIAL_GRADIENT << COMBINER_CTRL_COLOR_FILTER_SHIFT),
+            },
             Filter::PatternFilter(PatternFilter::Blur { sigma, direction }) => {
                 let sigma_inv = 1.0 / sigma;
                 let gauss_coeff_x = SQRT_2_PI_INV * sigma_inv;
@@ -996,7 +1119,7 @@ impl<D> Renderer<D> where D: Device {
                     ctrl: ctrl | (COMBINER_CTRL_FILTER_BLUR << COMBINER_CTRL_COLOR_FILTER_SHIFT),
                 }
             }
-            Filter::PatternFilter(PatternFilter::Text { 
+            Filter::PatternFilter(PatternFilter::Text {
                 fg_color,
                 bg_color,
                 defringing_kernel,
@@ -1020,25 +1143,31 @@ impl<D> Renderer<D> where D: Device {
             Filter::PatternFilter(PatternFilter::ColorMatrix(matrix)) => {
                 let [p0, p1, p2, p3, p4] = matrix.0;
                 FilterParams {
-                    p0, p1, p2, p3, p4,
-                    ctrl: ctrl | (COMBINER_CTRL_FILTER_COLOR_MATRIX << COMBINER_CTRL_COLOR_FILTER_SHIFT),
+                    p0,
+                    p1,
+                    p2,
+                    p3,
+                    p4,
+                    ctrl: ctrl
+                        | (COMBINER_CTRL_FILTER_COLOR_MATRIX << COMBINER_CTRL_COLOR_FILTER_SHIFT),
                 }
             }
-            Filter::None => {
-                FilterParams {
-                    p0: F32x4::default(),
-                    p1: F32x4::default(),
-                    p2: F32x4::default(),
-                    p3: F32x4::default(),
-                    p4: F32x4::default(),
-                    ctrl,
-                }
-            }
+            Filter::None => FilterParams {
+                p0: F32x4::default(),
+                p1: F32x4::default(),
+                p2: F32x4::default(),
+                p3: F32x4::default(),
+                p4: F32x4::default(),
+                ctrl,
+            },
         }
     }
 }
 
-impl<D> RendererCore<D> where D: Device {
+impl<D> RendererCore<D>
+where
+    D: Device,
+{
     pub(crate) fn mask_texture_format(&self) -> TextureFormat {
         match self.mode.level {
             RendererLevel::D3D9 => TextureFormat::RGBA16F,
@@ -1054,14 +1183,17 @@ impl<D> RendererCore<D> where D: Device {
             }
         }
 
-        let new_size = vec2i(MASK_FRAMEBUFFER_WIDTH,
-                             MASK_FRAMEBUFFER_HEIGHT * alpha_tile_pages_needed as i32);
+        let new_size = vec2i(
+            MASK_FRAMEBUFFER_WIDTH,
+            MASK_FRAMEBUFFER_HEIGHT * alpha_tile_pages_needed as i32,
+        );
         let format = self.mask_texture_format();
-        let mask_framebuffer_id =
-            self.allocator.allocate_framebuffer(&self.device,
-                                                new_size,
-                                                format,
-                                                FramebufferTag("TileAlphaMask"));
+        let mask_framebuffer_id = self.allocator.allocate_framebuffer(
+            &self.device,
+            new_size,
+            format,
+            FramebufferTag("TileAlphaMask"),
+        );
         let mask_framebuffer = self.allocator.get_framebuffer(mask_framebuffer_id);
         let old_mask_storage = self.mask_storage.take();
         self.mask_storage = Some(MaskStorage {
@@ -1078,68 +1210,92 @@ impl<D> RendererCore<D> where D: Device {
         let old_mask_texture = self.device.framebuffer_texture(old_mask_framebuffer);
         let old_size = self.device.texture_size(old_mask_texture);
 
-        let timer_query = self.timer_query_cache.start_timing_draw_call(&self.device,
-                                                                        &self.options);
+        let timer_query = self
+            .timer_query_cache
+            .start_timing_draw_call(&self.device, &self.options);
 
-        self.device.draw_elements(6, &RenderState {
-            target: &RenderTarget::Framebuffer(mask_framebuffer),
-            program: &self.programs.blit_program.program,
-            vertex_array: &self.vertex_arrays.blit_vertex_array.vertex_array,
-            primitive: Primitive::Triangles,
-            textures: &[(&self.programs.blit_program.src_texture, old_mask_texture)],
-            images: &[],
-            storage_buffers: &[],
-            uniforms: &[
-                (&self.programs.blit_program.framebuffer_size_uniform,
-                 UniformData::Vec2(new_size.to_f32().0)),
-                (&self.programs.blit_program.dest_rect_uniform,
-                 UniformData::Vec4(RectF::new(Vector2F::zero(), old_size.to_f32()).0)),
-            ],
-            viewport: RectI::new(Vector2I::default(), new_size),
-            options: RenderOptions {
-                clear_ops: ClearOps {
-                    color: Some(ColorF::new(0.0, 0.0, 0.0, 0.0)),
-                    ..ClearOps::default()
+        self.device.draw_elements(
+            6,
+            &RenderState {
+                target: &RenderTarget::Framebuffer(mask_framebuffer),
+                program: &self.programs.blit_program.program,
+                vertex_array: &self.vertex_arrays.blit_vertex_array.vertex_array,
+                primitive: Primitive::Triangles,
+                textures: &[(&self.programs.blit_program.src_texture, old_mask_texture)],
+                images: &[],
+                storage_buffers: &[],
+                uniforms: &[
+                    (
+                        &self.programs.blit_program.framebuffer_size_uniform,
+                        UniformData::Vec2(new_size.to_f32().0),
+                    ),
+                    (
+                        &self.programs.blit_program.dest_rect_uniform,
+                        UniformData::Vec4(RectF::new(Vector2F::zero(), old_size.to_f32()).0),
+                    ),
+                ],
+                viewport: RectI::new(Vector2I::default(), new_size),
+                options: RenderOptions {
+                    clear_ops: ClearOps {
+                        color: Some(ColorF::new(0.0, 0.0, 0.0, 0.0)),
+                        ..ClearOps::default()
+                    },
+                    ..RenderOptions::default()
                 },
-                ..RenderOptions::default()
             },
-        });
+        );
 
         self.stats.drawcall_count += 1;
         self.finish_timing_draw_call(&timer_query);
-        self.current_timer.as_mut().unwrap().push_query(TimeCategory::Other, timer_query);
+        self.current_timer
+            .as_mut()
+            .unwrap()
+            .push_query(TimeCategory::Other, timer_query);
     }
 
     pub(crate) fn set_uniforms_for_drawing_tiles<'a>(
-            &'a self,
-            tile_program: &'a TileProgramCommon<D>,
-            textures: &mut Vec<TextureBinding<'a, D::TextureParameter, D::Texture>>,
-            uniforms: &mut Vec<UniformBinding<'a, D::Uniform>>,
-            color_texture_0: Option<TileBatchTexture>) {
+        &'a self,
+        tile_program: &'a TileProgramCommon<D>,
+        textures: &mut Vec<TextureBinding<'a, D::TextureParameter, D::Texture>>,
+        uniforms: &mut Vec<UniformBinding<'a, D::Uniform>>,
+        color_texture_0: Option<TileBatchTexture>,
+    ) {
         let draw_viewport = self.draw_viewport();
 
         let gamma_lut_texture = self.allocator.get_texture(self.gamma_lut_texture_id);
-            self.allocator.get_texture(self.texture_metadata_texture_id);
+        self.allocator.get_texture(self.texture_metadata_texture_id);
         textures.push((&tile_program.gamma_lut_texture, gamma_lut_texture));
 
-        let texture_metadata_texture =
-            self.allocator.get_texture(self.texture_metadata_texture_id);
-        textures.push((&tile_program.texture_metadata_texture, texture_metadata_texture));
+        let texture_metadata_texture = self.allocator.get_texture(self.texture_metadata_texture_id);
+        textures.push((
+            &tile_program.texture_metadata_texture,
+            texture_metadata_texture,
+        ));
 
-        uniforms.push((&tile_program.tile_size_uniform,
-                       UniformData::Vec2(F32x2::new(TILE_WIDTH as f32, TILE_HEIGHT as f32))));
-        uniforms.push((&tile_program.framebuffer_size_uniform,
-                       UniformData::Vec2(draw_viewport.size().to_f32().0)));
-        uniforms.push((&tile_program.texture_metadata_size_uniform,
-                       UniformData::IVec2(I32x2::new(TEXTURE_METADATA_TEXTURE_WIDTH,
-                                                     TEXTURE_METADATA_TEXTURE_HEIGHT))));
+        uniforms.push((
+            &tile_program.tile_size_uniform,
+            UniformData::Vec2(F32x2::new(TILE_WIDTH as f32, TILE_HEIGHT as f32)),
+        ));
+        uniforms.push((
+            &tile_program.framebuffer_size_uniform,
+            UniformData::Vec2(draw_viewport.size().to_f32().0),
+        ));
+        uniforms.push((
+            &tile_program.texture_metadata_size_uniform,
+            UniformData::IVec2(I32x2::new(
+                TEXTURE_METADATA_TEXTURE_WIDTH,
+                TEXTURE_METADATA_TEXTURE_HEIGHT,
+            )),
+        ));
 
         if let Some(ref mask_storage) = self.mask_storage {
             let mask_framebuffer_id = mask_storage.framebuffer_id;
             let mask_framebuffer = self.allocator.get_framebuffer(mask_framebuffer_id);
             let mask_texture = self.device.framebuffer_texture(mask_framebuffer);
-            uniforms.push((&tile_program.mask_texture_size_0_uniform,
-                           UniformData::Vec2(self.device.texture_size(mask_texture).to_f32().0)));
+            uniforms.push((
+                &tile_program.mask_texture_size_0_uniform,
+                UniformData::Vec2(self.device.texture_size(mask_texture).to_f32().0),
+            ));
             textures.push((&tile_program.mask_texture_0, mask_texture));
         }
 
@@ -1147,17 +1303,21 @@ impl<D> RendererCore<D> where D: Device {
             Some(color_texture) => {
                 let color_texture_page = self.texture_page(color_texture.page);
                 let color_texture_size = self.device.texture_size(color_texture_page).to_f32();
-                self.device.set_texture_sampling_mode(color_texture_page,
-                                                      color_texture.sampling_flags);
+                self.device
+                    .set_texture_sampling_mode(color_texture_page, color_texture.sampling_flags);
                 textures.push((&tile_program.color_texture_0, color_texture_page));
-                uniforms.push((&tile_program.color_texture_size_0_uniform,
-                               UniformData::Vec2(color_texture_size.0)));
+                uniforms.push((
+                    &tile_program.color_texture_size_0_uniform,
+                    UniformData::Vec2(color_texture_size.0),
+                ));
             }
             None => {
                 // Attach any old texture, just to satisfy Metal.
                 textures.push((&tile_program.color_texture_0, texture_metadata_texture));
-                uniforms.push((&tile_program.color_texture_size_0_uniform,
-                               UniformData::Vec2(F32x2::default())));
+                uniforms.push((
+                    &tile_program.color_texture_size_0_uniform,
+                    UniformData::Vec2(F32x2::default()),
+                ));
             }
         }
     }
@@ -1165,14 +1325,15 @@ impl<D> RendererCore<D> where D: Device {
     // Pattern textures
 
     fn texture_page(&self, id: TexturePageId) -> &D::Texture {
-        self.device.framebuffer_texture(&self.texture_page_framebuffer(id))
+        self.device
+            .framebuffer_texture(&self.texture_page_framebuffer(id))
     }
 
     fn texture_page_framebuffer(&self, id: TexturePageId) -> &D::Framebuffer {
         let framebuffer_id = self.pattern_texture_pages[id.0 as usize]
-                                 .as_ref()
-                                 .expect("Texture page not allocated!")
-                                 .framebuffer_id;
+            .as_ref()
+            .expect("Texture page not allocated!")
+            .framebuffer_id;
         self.allocator.get_framebuffer(framebuffer_id)
     }
 
@@ -1185,9 +1346,9 @@ impl<D> RendererCore<D> where D: Device {
                     .expect("Draw target texture page not allocated!")
                     .must_preserve_contents
             }
-            None => {
-                self.framebuffer_flags.contains(FramebufferFlags::DEST_FRAMEBUFFER_IS_DIRTY)
-            }
+            None => self
+                .framebuffer_flags
+                .contains(FramebufferFlags::DEST_FRAMEBUFFER_IS_DIRTY),
         };
 
         if must_preserve_contents {
@@ -1202,8 +1363,8 @@ impl<D> RendererCore<D> where D: Device {
     // Sizing
 
     pub(crate) fn tile_size(&self) -> Vector2I {
-        let temp = self.draw_viewport().size() +
-            vec2i(TILE_WIDTH as i32 - 1, TILE_HEIGHT as i32 - 1);
+        let temp =
+            self.draw_viewport().size() + vec2i(TILE_WIDTH as i32 - 1, TILE_HEIGHT as i32 - 1);
         vec2i(temp.x() / TILE_WIDTH as i32, temp.y() / TILE_HEIGHT as i32)
     }
 
@@ -1239,10 +1400,13 @@ impl<D> RendererCore<D> where D: Device {
                 RenderTarget::Framebuffer(framebuffer)
             }
             None => {
-                if self.renderer_flags
-                       .contains(RendererFlags::INTERMEDIATE_DEST_FRAMEBUFFER_NEEDED) {
-                    let intermediate_dest_framebuffer =
-                        self.allocator.get_framebuffer(self.intermediate_dest_framebuffer_id);
+                if self
+                    .renderer_flags
+                    .contains(RendererFlags::INTERMEDIATE_DEST_FRAMEBUFFER_NEEDED)
+                {
+                    let intermediate_dest_framebuffer = self
+                        .allocator
+                        .get_framebuffer(self.intermediate_dest_framebuffer_id);
                     RenderTarget::Framebuffer(intermediate_dest_framebuffer)
                 } else {
                     match self.options.dest {
@@ -1266,7 +1430,8 @@ impl<D> RendererCore<D> where D: Device {
                     .must_preserve_contents = true;
             }
             None => {
-                self.framebuffer_flags.insert(FramebufferFlags::DEST_FRAMEBUFFER_IS_DIRTY);
+                self.framebuffer_flags
+                    .insert(FramebufferFlags::DEST_FRAMEBUFFER_IS_DIRTY);
             }
         }
     }
@@ -1282,34 +1447,43 @@ impl<D> RendererCore<D> where D: Device {
     }
 }
 
-impl<D> Frame<D> where D: Device {
+impl<D> Frame<D>
+where
+    D: Device,
+{
     // FIXME(pcwalton): This signature shouldn't be so big. Make a struct.
-    fn new(device: &D,
-           allocator: &mut GPUMemoryAllocator<D>,
-           blit_program: &BlitProgram<D>,
-           clear_program: &ClearProgram<D>,
-           reprojection_program: &ReprojectionProgram<D>,
-           stencil_program: &StencilProgram<D>,
-           quad_vertex_positions_buffer_id: GeneralBufferID,
-           quad_vertex_indices_buffer_id: IndexBufferID)
-           -> Frame<D> {
+    fn new(
+        device: &D,
+        allocator: &mut GPUMemoryAllocator<D>,
+        blit_program: &BlitProgram<D>,
+        clear_program: &ClearProgram<D>,
+        reprojection_program: &ReprojectionProgram<D>,
+        stencil_program: &StencilProgram<D>,
+        quad_vertex_positions_buffer_id: GeneralBufferID,
+        quad_vertex_indices_buffer_id: IndexBufferID,
+    ) -> Frame<D> {
         let quad_vertex_positions_buffer =
             allocator.get_general_buffer(quad_vertex_positions_buffer_id);
-        let quad_vertex_indices_buffer =
-            allocator.get_index_buffer(quad_vertex_indices_buffer_id);
+        let quad_vertex_indices_buffer = allocator.get_index_buffer(quad_vertex_indices_buffer_id);
 
-        let blit_vertex_array = BlitVertexArray::new(device,
-                                                     &blit_program,
-                                                     &quad_vertex_positions_buffer,
-                                                     &quad_vertex_indices_buffer);
-        let clear_vertex_array = ClearVertexArray::new(device,
-                                                       &clear_program,
-                                                       &quad_vertex_positions_buffer,
-                                                       &quad_vertex_indices_buffer);
-        let reprojection_vertex_array = ReprojectionVertexArray::new(device,
-                                                                     &reprojection_program,
-                                                                     &quad_vertex_positions_buffer,
-                                                                     &quad_vertex_indices_buffer);
+        let blit_vertex_array = BlitVertexArray::new(
+            device,
+            &blit_program,
+            &quad_vertex_positions_buffer,
+            &quad_vertex_indices_buffer,
+        );
+        let clear_vertex_array = ClearVertexArray::new(
+            device,
+            &clear_program,
+            &quad_vertex_positions_buffer,
+            &quad_vertex_indices_buffer,
+        );
+        let reprojection_vertex_array = ReprojectionVertexArray::new(
+            device,
+            &reprojection_program,
+            &quad_vertex_positions_buffer,
+            &quad_vertex_indices_buffer,
+        );
         let stencil_vertex_array = StencilVertexArray::new(device, &stencil_program);
 
         Frame {
@@ -1321,7 +1495,10 @@ impl<D> Frame<D> where D: Device {
     }
 }
 
-impl<D> RendererLevelImpl<D> where D: Device {
+impl<D> RendererLevelImpl<D>
+where
+    D: Device,
+{
     #[inline]
     fn require_d3d9(&mut self) -> &mut RendererD3D9<D> {
         match *self {
@@ -1390,9 +1567,12 @@ pub(crate) struct PatternTexturePage {
 }
 
 /// A mutable reference to the debug UI presenter.
-/// 
+///
 /// You can use this structure to draw custom debug widgets on screen, as the demo does.
-pub struct DebugUIPresenterInfo<'a, D> where D: Device {
+pub struct DebugUIPresenterInfo<'a, D>
+where
+    D: Device,
+{
     /// The GPU device.
     pub device: &'a mut D,
     /// The GPU memory allocator.
