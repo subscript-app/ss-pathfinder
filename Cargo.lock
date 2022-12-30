@@ -991,26 +991,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "vectorizer_c_api"
-version = "0.1.0"
-dependencies = [
- "core-foundation 0.6.4",
- "foreign-types",
- "io-surface",
- "libc",
- "metal",
- "ss_pathfinder_canvas",
- "ss_pathfinder_color",
- "ss_pathfinder_content",
- "ss_pathfinder_geometry",
- "ss_pathfinder_gpu",
- "ss_pathfinder_metal",
- "ss_pathfinder_renderer",
- "ss_pathfinder_resources",
- "ss_pathfinder_simd",
-]
-
-[[package]]
 name = "wasi"
 version = "0.9.0+wasi-snapshot-preview1"
 source = "registry+https://github.com/rust-lang/crates.io-index"

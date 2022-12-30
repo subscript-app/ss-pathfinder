@@ -9,10 +9,8 @@ members = [
     "renderer",
     "resources",
     "simd",
-    # "ui",
     "export",
     "vectorizer",
-    "vectorizer_c_api",
 ]
 
 default-members = [
@@ -25,10 +23,8 @@ default-members = [
     "renderer",
     "resources",
     "simd",
-    # "ui",
     "export",
     "vectorizer",
-    "vectorizer_c_api",
 ]
 
 exclude = [ "cross-build-bot" ]
