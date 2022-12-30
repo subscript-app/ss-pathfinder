@@ -373,7 +373,7 @@ pub struct ClearOps {
 // impl Default for ClearOps {
 //     fn default() -> Self {
 //         ClearOps {
-//             color: Some(ColorF::new(1.0, 1.0, 1.0, 1.0)),
+//             color: Some(ColorF::new(1.0, 1.0, 1.0, 0.0)),
 //             depth: None,
 //             stencil: None,
 //         }

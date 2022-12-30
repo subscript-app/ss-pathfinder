@@ -2,8 +2,8 @@
 mod data;
 mod renderers;
 
-pub use data::basics::{DynDrawCmd, StaticDrawCmd, ViewResolution};
-pub use renderers::scene::{ShapeType, VScene, VShape};
+pub use data::basics::{DynDrawCmd, StaticDrawCmd, ViewResolution, ColorScheme, ViewInfo, DualColors};
+pub use renderers::scene::{ShapeType, VScene, VShape, SceneType};
 pub use renderers::static_core::{Vectorizer, VectorizerMut, VectorizerRef};
 
 //―――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――

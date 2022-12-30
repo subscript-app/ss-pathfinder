@@ -1,6 +1,13 @@
 //―――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――
 // INTERNAL IMPORTS
 //―――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――
+use std::ffi::CString;
+use std::os::raw::{c_char, c_void};
+use std::path::PathBuf;
+use std::ptr;
+use std::slice;
+use std::str;
+
 use foreign_types::ForeignTypeRef;
 use io_surface::IOSurfaceRef;
 
@@ -44,15 +51,11 @@ use ss_pathfinder_gpu::Device;
 
 use ss_pathfinder_simd::default::F32x4;
 
+use crate::ViewInfo;
 use crate::data::basics::{DynDrawCmd, RenderingMode, StaticDrawCmd, ViewResolution};
 use crate::renderers::layer::VLayer;
 use crate::renderers::scene::{ShapeType, VScene, VShape};
-use std::ffi::CString;
-use std::os::raw::{c_char, c_void};
-use std::path::PathBuf;
-use std::ptr;
-use std::slice;
-use std::str;
+use crate::data::basics::ColorScheme;
 
 //―――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――
 // DATA TYPES
@@ -72,6 +75,7 @@ pub struct Vectorizer<const SN: usize = 1, const LN: usize = 1> {
     layers: [VLayer; LN],
     /// Use GPU compute-based renderer (default) or a hybrid CPU-GPU renderer.
     rendering_mode: RenderingMode,
+    configured_view_info: Option<ViewInfo>,
 }
 
 pub struct VectorizerRef<'a, 'b, const SN: usize = 1, const LN: usize = 1> {
@@ -99,9 +103,15 @@ impl<const SN: usize, const LN: usize> Vectorizer<SN, LN> {
         self.layers.get(ix)
     }
 
-    pub fn get_scene(&self, ix: usize) -> Option<&VScene> {
+    pub const fn get_scene(&self, ix: usize) -> &VScene { &self.scenes[ix] }
+    pub fn get_scene_safe(&self, ix: usize) -> Option<&VScene> {
         self.scenes.get(ix)
     }
+    pub fn get_scene_mut_safe(&mut self, ix: usize) -> Option<&mut VScene> {
+        self.scenes.get_mut(ix)
+    }
+    pub fn get_scene_mut(&mut self, ix: usize) -> &mut VScene { &mut self.scenes[ix] }
+
     pub const fn scenes(&self) -> &[VScene; SN] {
         &self.scenes
     }
@@ -175,6 +185,7 @@ impl<const LN: usize> Vectorizer<1, LN> {
     }
 }
 impl<const LN: usize> Vectorizer<2, LN> {
+
     pub fn scene1_mut(&mut self) -> &mut VScene {
         &mut self.scenes[0]
     }
@@ -320,6 +331,7 @@ impl Default for Vectorizer<1, 1> {
             scenes: [VScene::default()],
             layers: [VLayer::default()],
             rendering_mode: Default::default(),
+            configured_view_info: None,
         }
     }
 }
@@ -330,6 +342,7 @@ impl Default for Vectorizer<2, 1> {
             scenes: [VScene::default(), VScene::default()],
             layers: [VLayer::default()],
             rendering_mode: Default::default(),
+            configured_view_info: None,
         }
     }
 }
@@ -339,6 +352,7 @@ impl Default for Vectorizer<3, 1> {
             scenes: [VScene::default(), VScene::default(), VScene::default()],
             layers: [VLayer::default()],
             rendering_mode: Default::default(),
+            configured_view_info: None,
         }
     }
 }
@@ -353,6 +367,7 @@ impl Default for Vectorizer<4, 1> {
             ],
             layers: [VLayer::default()],
             rendering_mode: Default::default(),
+            configured_view_info: None,
         }
     }
 }
@@ -367,6 +382,7 @@ impl Default for Vectorizer<2, 2> {
             scenes: [VScene::default(), VScene::default()],
             layers: [VLayer::default(), VLayer::default()],
             rendering_mode: Default::default(),
+            configured_view_info: None,
         }
     }
 }
@@ -376,6 +392,7 @@ impl Default for Vectorizer<3, 3> {
             scenes: [VScene::default(), VScene::default(), VScene::default()],
             layers: [VLayer::default(), VLayer::default(), VLayer::default()],
             rendering_mode: Default::default(),
+            configured_view_info: None,
         }
     }
 }
@@ -395,6 +412,7 @@ impl Default for Vectorizer<4, 4> {
                 VLayer::default(),
             ],
             rendering_mode: Default::default(),
+            configured_view_info: None,
         }
     }
 }
@@ -402,6 +420,21 @@ impl Default for Vectorizer<4, 4> {
 //―――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――
 // UPDATE
 //―――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――
+
+
+impl<const SN: usize, const LN: usize> Vectorizer<SN, LN> {
+    pub fn view_info_unchanged(&self, current_view_info: &ViewInfo) -> Option<bool> {
+        let unchanged = self.configured_view_info
+            .as_ref()
+            .map(|last| ViewInfo::unchanged(last, current_view_info))?;
+        Some(unchanged)
+    }
+    pub fn set_configured_view_info(&mut self, new_view_info: ViewInfo) {
+        self.configured_view_info = Some(new_view_info);
+    }
+}
+
+
 
 //―――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――
 // DRAW - PUBLIC API
@@ -471,7 +504,13 @@ impl<const SN: usize, const LN: usize> Vectorizer<SN, LN> {
         let scenes = &mut self.scenes;
         let layer = &mut self.layers[0];
         let drawable = draw_cmd.head_drawable();
-        layer.draw_scenes(draw_cmd.resolution, draw_cmd.metal_device, drawable, scenes);
+        layer.draw_scenes(
+            draw_cmd.view_info,
+            draw_cmd.metal_device,
+            drawable,
+            scenes,
+            self.rendering_mode
+        );
     }
 }
 
@@ -486,7 +525,13 @@ impl<const SN: usize, const LN: usize> Vectorizer<SN, LN> {
             .zip(self.scenes.iter_mut())
             .map(|((x, y), z)| (x, *y, z));
         for (layer, drawable, scene) in iter {
-            layer.draw_scene(draw_cmd.resolution, draw_cmd.metal_device, drawable, scene);
+            layer.draw_scene(
+                draw_cmd.view_info,
+                draw_cmd.metal_device,
+                drawable,
+                scene,
+                self.rendering_mode
+            );
         }
     }
 }
@@ -494,3 +539,4 @@ impl<const SN: usize, const LN: usize> Vectorizer<SN, LN> {
 //―――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――
 // INTERNAL HELPERS
 //―――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――
+

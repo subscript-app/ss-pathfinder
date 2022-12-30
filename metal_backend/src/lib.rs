@@ -1984,7 +1984,7 @@ impl MetalDevice {
             .render_target_color_texture(&render_state.target)
             .pixel_format();
         pipeline_color_attachment.set_pixel_format(pixel_format);
-
+        
         match render_state.options.blend {
             None => pipeline_color_attachment.set_blending_enabled(false),
             Some(ref blend) => {

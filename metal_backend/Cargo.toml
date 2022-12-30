@@ -19,8 +19,8 @@ foreign-types = "0.3"
 half = "1.5"
 io-surface = "0.12"
 libc = "0.2"
-objc = {version = "0.2", features = ['objc_exception', 'exception']}
-objc_exception = "0.1.2"
+objc = "0.2"
+# objc_exception = "0.1.2"
 
 
 # metal = "0.18"

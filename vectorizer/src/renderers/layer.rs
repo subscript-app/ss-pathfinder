@@ -56,7 +56,8 @@ use std::str;
 
 use super::backend_context::BackendContext;
 use super::scene::{ShapeType, VScene, VShape};
-use crate::data::basics::ViewResolution;
+use crate::data::basics::{ViewResolution, ViewInfo};
+use crate::data::basics::ColorScheme;
 
 //―――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――
 // MISC
@@ -90,18 +91,23 @@ pub(crate) struct VLayer {
 impl VLayer {
     pub(crate) fn draw_scene(
         &mut self,
-        resolution: ViewResolution,
+        view_info: ViewInfo,
         metal_device: &NativeMetalDeviceRef,
         ca_drawable: &CoreAnimationDrawableRef,
         scene: &mut VScene,
+        rendering_mode: crate::data::basics::RenderingMode,
     ) {
         if let Some(context) = self.context.as_mut() {
             context.renderer.device_mut().swap_texture(ca_drawable);
-            context.draw_shapes(resolution.as_vector2f(), ca_drawable, &scene.polygons);
+            context.draw_scene(view_info, ca_drawable, scene);
         } else {
-            let mut context =
-                BackendContext::new(resolution.as_vector2i(), metal_device, ca_drawable);
-            context.draw_shapes(resolution.as_vector2f(), ca_drawable, &scene.polygons);
+            let mut context = BackendContext::new(
+                view_info.resolution.as_vector2i(),
+                metal_device,
+                ca_drawable,
+                rendering_mode
+            );
+            context.draw_scene(view_info, ca_drawable, scene);
             self.context = Some(context);
         }
     }
@@ -110,18 +116,23 @@ impl VLayer {
 impl VLayer {
     pub(crate) fn draw_scenes(
         &mut self,
-        resolution: ViewResolution,
+        view_info: ViewInfo,
         metal_device: &NativeMetalDeviceRef,
         ca_drawable: &CoreAnimationDrawableRef,
         scenes: &mut [VScene],
+        rendering_mode: crate::data::basics::RenderingMode,
     ) {
         if let Some(context) = self.context.as_mut() {
             context.renderer.device_mut().swap_texture(ca_drawable);
-            context.draw_scenes(resolution.as_vector2f(), ca_drawable, scenes);
+            context.draw_scenes(view_info, ca_drawable, scenes);
         } else {
-            let mut context =
-                BackendContext::new(resolution.as_vector2i(), metal_device, ca_drawable);
-            context.draw_scenes(resolution.as_vector2f(), ca_drawable, scenes);
+            let mut context = BackendContext::new(
+                view_info.resolution.as_vector2i(),
+                metal_device,
+                ca_drawable,
+                rendering_mode
+            );
+            context.draw_scenes(view_info, ca_drawable, scenes);
             self.context = Some(context);
         }
     }

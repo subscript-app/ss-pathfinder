@@ -42,14 +42,17 @@ use ss_pathfinder_content::stroke::LineCap;
 use ss_pathfinder_gpu::Device;
 use ss_pathfinder_simd::default::F32x4;
 
-use super::scene::{ShapeType, VScene, VShape};
-use crate::data::basics::ViewResolution;
 use std::ffi::CString;
 use std::os::raw::{c_char, c_void};
 use std::path::PathBuf;
 use std::ptr;
 use std::slice;
 use std::str;
+
+
+use super::scene::{ShapeType, VScene, VShape};
+use crate::data::basics::{ColorScheme, ViewInfo};
+use crate::data::basics::{ViewResolution, RenderingMode};
 
 //―――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――
 // DATA TYPES
@@ -70,22 +73,27 @@ impl BackendContext {
         window_size: Vector2I,
         metal_device: &NativeMetalDeviceRef,
         ca_drawable: &CoreAnimationDrawableRef,
+        rendering_mode: RenderingMode
     ) -> Self {
         let device = unsafe { MetalDevice::new(metal_device, ca_drawable) };
         let resource_loader = unsafe { EmbeddedResourceLoader::new() };
         let dest_framebuffer = DestFramebuffer::full_window(window_size);
-        // let level = RendererLevel::default_for_device(&device);
-        // let render_mode = RendererMode { level: RendererLevel::D3D9 };
-        let render_mode = RendererMode {
-            level: RendererLevel::D3D11,
+        let renderer_level = match rendering_mode {
+            RenderingMode::Compute => RendererLevel::D3D11,
+            RenderingMode::Raster => RendererLevel::D3D9,
         };
+        let render_mode = RendererMode { level: renderer_level };
         let render_options = RendererOptions {
             dest: dest_framebuffer,
             background_color: Some(ColorF::new(1.0, 1.0, 1.0, 0.0)),
             show_debug_ui: false,
         };
         let renderer = Renderer::new(device, &EmbeddedResourceLoader, render_mode, render_options);
-        let build_options = BuildOptions::default();
+        let build_options = BuildOptions{
+            // dilation: Vector2F::new(2.0, 2.0),
+            // subpixel_aa_enabled: true,
+            ..BuildOptions::default()
+        };
         let font_context = CanvasFontContext::from_system_source();
         Self {
             renderer,
@@ -100,37 +108,31 @@ impl BackendContext {
 //―――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――
 
 impl BackendContext {
-    pub fn draw_shapes(
+    pub fn draw_scene(
         &mut self,
-        canvas_size: Vector2F,
+        view_info: ViewInfo,
         current_drawable: &CoreAnimationDrawableRef,
-        shapes: &[VShape],
+        scene: &mut VScene,
     ) {
-        let mut canvas = Canvas::new(canvas_size).get_context_2d(self.font_context.clone());
-        // canvas.set_global_composite_operation(CompositeOperation::SourceOut);
-        // canvas.set_global_alpha(0.0);
-
-        for VShape {
-            shape_type,
-            path,
-            color,
-        } in shapes.to_vec().into_iter()
-        {
+        // println!("BackendContext.draw_scene!");
+        // if !scene.needs_redraw() { return }
+        scene.set_needs_redraw(false);
+        let mut canvas = Canvas::new(view_info.resolution.as_vector2f()).get_context_2d(self.font_context.clone());
+        for VShape {shape_type, path, color} in scene.shapes() {
+            let path = path.clone();
             match shape_type {
                 ShapeType::Fill => {
-                    canvas.set_fill_style(color);
+                    canvas.set_fill_style(*color.get(view_info.color_scheme));
                     canvas.fill_path(path, Default::default());
                 }
                 ShapeType::Stroke { line_width } => {
-                    canvas.set_stroke_style(color);
-                    canvas.set_line_width(line_width);
+                    canvas.set_stroke_style(*color.get(view_info.color_scheme));
+                    canvas.set_line_width(*line_width);
                     canvas.stroke_path(path);
                 }
             }
         }
-
         let scene = canvas.into_canvas().into_scene();
-
         let mut scene_proxy =
             SceneProxy::from_scene(scene, self.renderer.mode().level, RayonExecutor);
         scene_proxy.build_and_render(&mut self.renderer, self.build_options.clone());
@@ -142,12 +144,12 @@ impl BackendContext {
 impl BackendContext {
     pub fn draw_scenes(
         &mut self,
-        canvas_size: Vector2F,
+        view_info: ViewInfo,
         current_drawable: &CoreAnimationDrawableRef,
-        scenes: &[VScene],
+        scenes: &mut [VScene],
     ) {
-        for scene in scenes.iter() {
-            self.draw_shapes(canvas_size, current_drawable, &scene.polygons);
+        for scene in scenes.iter_mut() {
+            self.draw_scene(view_info, current_drawable, scene);
         }
     }
 }
